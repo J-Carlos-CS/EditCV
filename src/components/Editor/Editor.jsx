@@ -1,28 +1,13 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
+import MonacoEditor from '@monaco-editor/react'
 import styles from './Editor.module.css'
 
 export default function Editor({ value, onChange, error }) {
-  const textareaRef = useRef(null)
+  const editorRef = useRef(null)
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-    }
-  }, [value])
-
-  function handleKeyDown(e) {
-    if (e.key === 'Tab') {
-      e.preventDefault()
-      const ta = e.target
-      const start = ta.selectionStart
-      const end = ta.selectionEnd
-      const newValue = value.substring(0, start) + '  ' + value.substring(end)
-      onChange(newValue)
-      requestAnimationFrame(() => {
-        ta.selectionStart = start + 2
-        ta.selectionEnd = start + 2
-      })
-    }
+  function handleMount(editor) {
+    editorRef.current = editor
+    editor.updateOptions({ tabSize: 2, insertSpaces: true })
   }
 
   return (
@@ -31,17 +16,37 @@ export default function Editor({ value, onChange, error }) {
         <span className={styles.label}>YAML Editor</span>
         {error && <span className={styles.errorBadge}>Error de sintaxis</span>}
       </div>
-      <textarea
-        ref={textareaRef}
-        className={`${styles.textarea} ${error ? styles.hasError : ''}`}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        spellCheck={false}
-        autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="off"
-      />
+      <div className={styles.monacoContainer}>
+        <MonacoEditor
+          language="yaml"
+          theme="vs-dark"
+          value={value}
+          onChange={val => onChange(val ?? '')}
+          onMount={handleMount}
+          options={{
+            fontSize: 13,
+            fontFamily: "'Cascadia Code', 'Fira Code', Consolas, monospace",
+            fontLigatures: true,
+            lineNumbers: 'on',
+            minimap: { enabled: true },
+            folding: true,
+            foldingHighlight: true,
+            foldingStrategy: 'indentation',
+            showFoldingControls: 'always',
+            wordWrap: 'off',
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            tabSize: 2,
+            renderLineHighlight: 'all',
+            cursorBlinking: 'smooth',
+            smoothScrolling: true,
+            bracketPairColorization: { enabled: true },
+            guides: { indentation: true, bracketPairs: true },
+            renderWhitespace: 'selection',
+            padding: { top: 8, bottom: 8 },
+          }}
+        />
+      </div>
       {error && <div className={styles.errorMsg}>{error}</div>}
     </div>
   )

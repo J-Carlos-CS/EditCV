@@ -32,28 +32,9 @@
   padding: 0.15rem 0.5rem;
 }
 
-.textarea {
+.monacoContainer {
   flex: 1;
-  width: 100%;
-  resize: none;
-  background: var(--bg);
-  color: var(--text-primary);
-  border: none;
-  outline: none;
-  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
-  font-size: 0.82rem;
-  line-height: 1.6;
-  padding: 1rem;
-  tab-size: 2;
-  overflow-y: auto;
-  overflow-x: auto;
-  white-space: pre;
-  word-break: normal;
-  overflow-wrap: normal;
-}
-
-.hasError {
-  border-left: 3px solid #e53e3e;
+  overflow: hidden;
 }
 
 .errorMsg {
