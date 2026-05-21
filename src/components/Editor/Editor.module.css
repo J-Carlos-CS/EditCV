@@ -1,0 +1,68 @@
+.editorWrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.errorBadge {
+  font-size: 0.7rem;
+  background: #e53e3e22;
+  color: #fc8181;
+  border: 1px solid #e53e3e55;
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+}
+
+.textarea {
+  flex: 1;
+  width: 100%;
+  resize: none;
+  background: var(--bg);
+  color: var(--text-primary);
+  border: none;
+  outline: none;
+  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  padding: 1rem;
+  tab-size: 2;
+  overflow-y: auto;
+  overflow-x: auto;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.hasError {
+  border-left: 3px solid #e53e3e;
+}
+
+.errorMsg {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  color: #fc8181;
+  background: #e53e3e11;
+  border-top: 1px solid #e53e3e33;
+  flex-shrink: 0;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
