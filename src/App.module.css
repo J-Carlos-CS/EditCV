@@ -14,7 +14,7 @@
 
 /* Editor pane */
 .editorPane {
-  width: 380px;
+  flex: 1;
   min-width: 280px;
   display: flex;
   flex-direction: column;
@@ -26,6 +26,7 @@
 /* Preview pane */
 .previewPane {
   flex: 1;
+  min-width: 280px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
