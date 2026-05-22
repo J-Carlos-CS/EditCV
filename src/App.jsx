@@ -6,7 +6,7 @@ import Editor from './components/Editor/Editor'
 import CVPreview from './components/CVPreview/CVPreview'
 import { parseCV } from './utils/yamlParser'
 import { loadCVs, saveCV, createCV, getActiveId, setActiveId } from './utils/storage'
-import { exportToPDF } from './utils/pdfExport'
+import { exportToPDF } from './utils/pdfExportVector'
 
 function AppInner() {
   const [cvs, setCVs] = useState([])
@@ -70,11 +70,11 @@ function AppInner() {
   }
 
   const handleExport = useCallback(async () => {
-    if (!previewRef.current || exporting) return
+    if (!parsedCV || exporting) return
     setExporting(true)
     try {
       const name = parsedCV?.name || 'cv'
-      await exportToPDF(previewRef.current, `${name}.pdf`)
+      await exportToPDF(parsedCV, `${name}.pdf`)
     } finally {
       setExporting(false)
     }
