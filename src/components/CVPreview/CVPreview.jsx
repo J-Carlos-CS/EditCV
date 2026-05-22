@@ -2,8 +2,9 @@ import { useRef, useState, useLayoutEffect } from 'react'
 import CVHeader from './sections/CVHeader'
 import CVSection from './CVSection'
 
+// PDF page: 792pt × (96/72) = 1056px. Padding: 24pt × (96/72) = 32px.
 const PAGE_HEIGHT = 1056
-const PAGE_PADDING_V = 38
+const PAGE_PADDING_V = 32
 
 function usePagination(cvData) {
   const measureRef = useRef(null)
@@ -72,7 +73,7 @@ export default function CVPreview({ cvData }) {
         aria-hidden="true"
         style={{
           position: 'fixed', top: 0, left: '-9999px', visibility: 'hidden',
-          width: '816px', padding: `${PAGE_PADDING_V}px 58px`, boxSizing: 'border-box',
+          width: '816px', padding: `${PAGE_PADDING_V}px 58px 0`, boxSizing: 'border-box',
           fontFamily: "'Times New Roman', Times, serif", fontSize: '10pt',
           lineHeight: '1.35', pointerEvents: 'none',
         }}

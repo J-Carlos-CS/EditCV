@@ -1,14 +1,19 @@
 import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import { detectEntryType, formatDateRange } from './yamlParser'
 
-// 1pt CSS ≈ 1pt PDF. Page padding matches global.css: 38px top/bottom, 58px sides
+// PDF pt vs HTML px: 1px = 0.75pt (96dpi→72dpi). 38px→28.5pt, 58px→43.5pt matches preview exactly.
 const S = StyleSheet.create({
+  // Sizes below are in pt (PDF units). Browser renders CSS pt at 96dpi (1pt=1.333px),
+  // so to match preview visually we keep pt values identical to the CSS pt values.
+  // Page is US Letter 612×792pt. Padding converted from px: px*0.75=pt.
   page: {
     fontFamily: 'Times-Roman',
     fontSize: 10,
     lineHeight: 1.35,
-    paddingVertical: 38,
-    paddingHorizontal: 58,
+    paddingTop: 24,
+    paddingBottom: 24,
+    paddingLeft: 43.5,
+    paddingRight: 43.5,
     color: '#000000',
     backgroundColor: '#ffffff',
   },
@@ -23,15 +28,15 @@ const S = StyleSheet.create({
   // ── Section ─────────────────────────────────────────────────
   section: { marginTop: 5 },
   sectionTitleWrap: { flexDirection: 'row', alignItems: 'center', marginBottom: 3 },
-  sectionLine: { flex: 1, height: 1, backgroundColor: '#000' },
+  sectionLine: { flex: 1, height: 0.75, backgroundColor: '#000' },
   sectionTitle: { fontFamily: 'Times-Bold', fontSize: 10, marginHorizontal: 6 },
 
   // ── Entry ───────────────────────────────────────────────────
   entry: { marginBottom: 3 },
-  entryRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  entryRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 6 },
   entryLeft: { flex: 1, flexDirection: 'column' },
   entryRight: { flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0 },
-  entryTitle: { fontFamily: 'Times-Bold', fontSize: 10 },
+  entryTitle: { fontFamily: 'Times-Bold', fontSize: 10, color: '#000' },
   entrySubtitle: { fontFamily: 'Times-Italic', fontSize: 9.5, color: '#111' },
   entryLocation: { fontSize: 9.5, color: '#111' },
   entryDate: { fontSize: 9.5, color: '#111' },
@@ -39,18 +44,18 @@ const S = StyleSheet.create({
 
   // ── Bullets ─────────────────────────────────────────────────
   bulletItem: { flexDirection: 'row', marginTop: 1 },
-  bulletDot: { width: 13, fontSize: 9.5 },
-  bulletText: { flex: 1, fontSize: 9.5, lineHeight: 1.3 },
+  bulletDot: { width: 10, fontSize: 9.5, color: '#000' },
+  bulletText: { flex: 1, fontSize: 9.5, lineHeight: 1.3, color: '#000' },
 
   // ── Skills ──────────────────────────────────────────────────
-  skillRow: { flexDirection: 'row', fontSize: 9.5, marginBottom: 1 },
-  skillLabel: { fontFamily: 'Times-Bold', marginRight: 3 },
+  skillRow: { flexDirection: 'row', fontSize: 9.5, marginBottom: 1, gap: 3 },
+  skillLabel: { fontFamily: 'Times-Bold', color: '#000' },
   skillValue: { flex: 1, color: '#111' },
 
   // ── Publications ────────────────────────────────────────────
   pubEntry: { marginBottom: 3 },
-  pubTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  pubTitle: { fontFamily: 'Times-Bold', fontSize: 9.5, flex: 1 },
+  pubTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
+  pubTitle: { fontFamily: 'Times-Bold', fontSize: 9.5, flex: 1, color: '#000' },
   pubYear: { fontSize: 9.5, color: '#111', flexShrink: 0 },
   pubAuthors: { fontFamily: 'Times-Italic', fontSize: 9, color: '#111', marginTop: 1 },
   pubJournal: { fontSize: 9, color: '#333', marginTop: 1, marginBottom: 2 },
@@ -88,6 +93,7 @@ function MDText({ text, style }) {
           key={i}
           style={{
             fontFamily: seg.bold ? 'Times-Bold' : seg.italic ? 'Times-Italic' : 'Times-Roman',
+            color: style?.color ?? '#000',
           }}
         >
           {seg.text}

@@ -1,1 +1,1 @@
-export { exportToPDF } from './pdfExportVector'
+export { exportToPDF } from './pdfExport.jsx'
