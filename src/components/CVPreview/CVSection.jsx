@@ -32,7 +32,7 @@ export default function CVSection({ title, entries }) {
 
   return (
     <section className="section">
-      <h2 className="sectionTitle">{title.charAt(0).toUpperCase() + title.slice(1)}</h2>
+      <h2 className="sectionTitle">{title.toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</h2>
       {wrapInList ? (
         <ul className="genericList">
           {entries.map((e, i) => renderEntry(e, i))}

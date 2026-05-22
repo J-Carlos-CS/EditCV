@@ -548,8 +548,7 @@ body {
 .sectionTitle::after {
   content: '';
   flex: 1;
-  height: 1px;
-  background: #000;
+  border-top: 0.5pt solid #000;
 }
 
 /* ── Entry base ─────────────────────────────────────────────── */

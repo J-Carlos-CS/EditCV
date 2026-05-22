@@ -92,7 +92,7 @@ function AppInner() {
         />
         <div className="mainCard">
           <div className="editorPane">
-            <Editor value={yamlText} onChange={setYamlText} error={parseError} />
+            <Editor value={yamlText} onChange={setYamlText} error={parseError} parsedCV={parsedCV} />
           </div>
           <div className="previewPane">
             <div className="previewToolbar">
