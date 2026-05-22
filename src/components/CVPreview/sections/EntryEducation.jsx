@@ -7,12 +7,11 @@ export default function EntryEducation({ entry }) {
     <div className="entry">
       <div className="entryHeader">
         <div className="entryLeft">
-          <span className="entryTitle">{entry.institution}</span>
-          {entry.area && (
-            <span className="entrySubtitle">
-              {entry.degree ? `${entry.degree} in ${entry.area}` : entry.area}
-            </span>
-          )}
+          <div className="entryTitleRow">
+            {entry.degree && <span className="entryDegree">{entry.degree}</span>}
+            <span className="entryTitle">{entry.institution}</span>
+            {entry.area && <span className="entryArea">{entry.area}</span>}
+          </div>
           {entry.summary && <MD text={entry.summary} className="entrySummary" tag="p" />}
         </div>
         <div className="entryRight">

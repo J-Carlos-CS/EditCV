@@ -209,6 +209,22 @@ body {
   font-size: 0.75rem;
 }
 
+.templateSelect {
+  padding: 0.22rem 0.5rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+}
+
+.templateSelect:focus {
+  border-color: var(--accent);
+}
+
 .zoomLabel {
   font-size: 0.75rem;
   font-weight: 600;
@@ -464,9 +480,6 @@ body {
   min-height: 1056px;
   padding: 32px 58px;
   box-shadow: 0 4px 32px rgba(0,0,0,0.35);
-  font-family: 'Times New Roman', Times, serif;
-  font-size: 10pt;
-  line-height: 1.35;
   box-sizing: border-box;
 }
 
@@ -489,223 +502,5 @@ body {
   text-align: center;
   margin-top: 4rem;
   font-family: sans-serif;
-}
-
-/* ── CV Header ──────────────────────────────────────────────── */
-.cvHeader {
-  text-align: center;
-  margin-bottom: 4pt;
-}
-
-.cvName {
-  font-size: 18pt;
-  font-weight: bold;
-  margin: 0 0 2pt;
-  color: #000;
-}
-
-.cvHeadline {
-  font-size: 9.5pt;
-  margin: 0 0 2pt;
-  color: #111;
-}
-
-.cvContact {
-  font-size: 9pt;
-  color: #111;
-  margin-top: 2pt;
-  line-height: 1.4;
-  text-align: center;
-}
-
-.contactSep {
-  color: #555;
-}
-
-.cvContact a {
-  color: #000;
-  text-decoration: none;
-}
-
-/* ── CV Section ─────────────────────────────────────────────── */
-.section {
-  margin-top: 5pt;
-}
-
-/* Harvard-style centered title with lines */
-.sectionTitle {
-  display: flex;
-  align-items: center;
-  font-size: 10pt;
-  font-weight: bold;
-  color: #000;
-  margin: 0 0 3pt;
-  gap: 6pt;
-  white-space: nowrap;
-}
-
-.sectionTitle::before,
-.sectionTitle::after {
-  content: '';
-  flex: 1;
-  border-top: 0.5pt solid #000;
-}
-
-/* ── Entry base ─────────────────────────────────────────────── */
-.entry {
-  margin-bottom: 3pt;
-}
-
-.entryHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 6pt;
-}
-
-.entryLeft {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.entryRight {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  flex-shrink: 0;
-  text-align: right;
-}
-
-.entryTitle {
-  font-weight: bold;
-  font-size: 10pt;
-  color: #000;
-}
-
-.entryTitle a {
-  color: #000;
-  text-decoration: underline;
-}
-
-.entrySubtitle {
-  font-style: italic;
-  font-size: 9.5pt;
-  color: #111;
-}
-
-.entryLocation {
-  font-size: 9.5pt;
-  color: #111;
-}
-
-.entryDate {
-  font-size: 9.5pt;
-  color: #111;
-  white-space: nowrap;
-}
-
-.entrySummary {
-  font-size: 9.5pt;
-  margin: 1pt 0 0;
-  color: #111;
-}
-
-/* ── Bullet lists ───────────────────────────────────────────── */
-.bullets {
-  margin: 1pt 0 0 0;
-  padding-left: 13pt;
-  color: #000;
-  font-size: 9.5pt;
-  line-height: 1.3;
-}
-
-.bullets li {
-  margin-bottom: 0.5pt;
-}
-
-.subBullets {
-  margin: 1pt 0 0;
-  padding-left: 13pt;
-}
-
-.subBullets li {
-  margin-bottom: 0.5pt;
-}
-
-/* ── Skills ─────────────────────────────────────────────────── */
-.skillRow {
-  display: flex;
-  font-size: 9.5pt;
-  margin-bottom: 1pt;
-  gap: 3pt;
-  line-height: 1.3;
-}
-
-.skillLabel {
-  font-weight: bold;
-  white-space: nowrap;
-  color: #000;
-}
-
-.skillDetails {
-  color: #111;
-}
-
-/* ── Publications ───────────────────────────────────────────── */
-.publicationRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8pt;
-}
-
-.pubTitle {
-  font-weight: bold;
-  font-size: 9.5pt;
-  flex: 1;
-  color: #000;
-}
-
-.pubTitle a {
-  color: #000;
-  text-decoration: underline;
-}
-
-.pubAuthors {
-  font-size: 9pt;
-  color: #111;
-  margin: 0.5pt 0;
-  font-style: italic;
-}
-
-.pubJournal {
-  font-size: 9pt;
-  color: #333;
-  margin: 0.5pt 0 2pt;
-}
-
-.pubDoi {
-  color: #555;
-  font-size: 8.5pt;
-}
-
-/* ── Generic bullet/text lists ──────────────────────────────── */
-.genericList {
-  margin: 0;
-  padding-left: 13pt;
-  color: #000;
-  font-size: 9.5pt;
-  line-height: 1.35;
-}
-
-.genericBullet {
-  margin-bottom: 1pt;
-}
-
-.genericText {
-  font-size: 9.5pt;
-  color: #111;
-  margin: 0 0 3pt;
 }
 

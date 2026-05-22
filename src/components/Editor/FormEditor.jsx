@@ -11,15 +11,18 @@ function getSectionType(name, entries = []) {
   const map = {
     education: 'education', experience: 'experience', projects: 'project',
     publications: 'publication', skills: 'skill', selected_honors: 'honor',
+    summary: 'summary',
   }
   if (map[name]) return map[name]
   const first = entries[0]
-  if (!first || typeof first !== 'object') return 'honor'
+  if (!first) return 'honor'
+  if (typeof first === 'string') return 'summary'
   if (first.institution) return 'education'
   if (first.company) return 'experience'
   if (first.title && first.authors) return 'publication'
   if (first.name) return 'project'
   if (first.label) return 'skill'
+  if ('summary' in first && !('bullet' in first)) return 'summary'
   return 'honor'
 }
 
@@ -30,6 +33,7 @@ function newEntry(type) {
     case 'project':     return { name: '', start_date: '', end_date: '', summary: '', highlights: [] }
     case 'publication': return { title: '', authors: [], doi: '', journal: '', date: '' }
     case 'skill':       return { label: '', details: '' }
+    case 'summary':     return { summary: '' }
     default:            return { bullet: '' }
   }
 }
@@ -244,6 +248,27 @@ function HonorEntry({ entry, onChange }) {
   )
 }
 
+function SummaryEntry({ entry, onChange }) {
+  const isString = typeof entry === 'string'
+  const value = isString ? entry : (entry.summary ?? entry.bullet ?? '')
+  function handleChange(v) {
+    if (isString) { onChange(v); return }
+    const next = { ...entry, summary: v }
+    delete next.bullet
+    onChange(next)
+  }
+  return (
+    <div className="ff-entry-fields">
+      <TA
+        label="Summary"
+        value={value}
+        onChange={handleChange}
+        placeholder="Write a summary or description…"
+      />
+    </div>
+  )
+}
+
 const ENTRY_COMPONENTS = {
   education: EducationEntry,
   experience: ExperienceEntry,
@@ -251,9 +276,11 @@ const ENTRY_COMPONENTS = {
   publication: PublicationEntry,
   skill: SkillEntry,
   honor: HonorEntry,
+  summary: SummaryEntry,
 }
 
 const SECTION_TYPE_OPTIONS = [
+  { value: 'summary',     label: 'Summary / Text' },
   { value: 'education',   label: 'Education' },
   { value: 'experience',  label: 'Experience' },
   { value: 'project',     label: 'Projects' },
@@ -346,7 +373,7 @@ function SectionPanel({ name, entries = [], onChange, onDelete, onRename, onMove
 // ── Add Section Modal ─────────────────────────────────────────
 function AddSectionModal({ onAdd, onClose }) {
   const [sectionName, setSectionName] = useState('')
-  const [entryType, setEntryType] = useState('honor')
+  const [entryType, setEntryType] = useState('summary')
   const inputRef = useRef(null)
 
   useEffect(() => { inputRef.current?.focus() }, [])

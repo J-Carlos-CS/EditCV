@@ -7,8 +7,12 @@ export default function EntryProject({ entry }) {
     <div className="entry">
       <div className="entryHeader">
         <div className="entryLeft">
-          <MD text={entry.name} className="entryTitle" />
-          {entry.summary && <MD text={entry.summary} className="entrySubtitle" />}
+          <span className="entryTitle">
+            {entry.url
+              ? <a href={entry.url} target="_blank" rel="noreferrer">{entry.name}</a>
+              : entry.name}
+          </span>
+          {entry.summary && <MD text={entry.summary} className="entrySummary" tag="p" />}
         </div>
         <div className="entryRight">
           {entry.location && <span className="entryLocation">{entry.location}</span>}

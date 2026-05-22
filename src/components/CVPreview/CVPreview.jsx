@@ -1,12 +1,12 @@
 import { useRef, useState, useLayoutEffect } from 'react'
 import CVHeader from './sections/CVHeader'
 import CVSection from './CVSection'
+import { useTemplate } from '../../context/TemplateContext'
+import { TEMPLATES } from '../../templates/index'
 
-// PDF page: 792pt × (96/72) = 1056px. Padding: 24pt × (96/72) = 32px.
 const PAGE_HEIGHT = 1056
-const PAGE_PADDING_V = 32
 
-function usePagination(cvData) {
+function usePagination(cvData, paddingV) {
   const measureRef = useRef(null)
   const [pages, setPages] = useState(null)
 
@@ -15,7 +15,7 @@ function usePagination(cvData) {
     const children = Array.from(measureRef.current.children)
     if (!children.length) return
 
-    const available = PAGE_HEIGHT - PAGE_PADDING_V * 2
+    const available = PAGE_HEIGHT - paddingV * 2
     const groups = []
     let page = [], height = 0
 
@@ -32,12 +32,15 @@ function usePagination(cvData) {
     }
     if (page.length) groups.push(page)
     setPages(groups)
-  }, [cvData])
+  }, [cvData, paddingV])
 
   return { measureRef, pages }
 }
 
 export default function CVPreview({ cvData, zoom = 100 }) {
+  const { template } = useTemplate()
+  const tpl = TEMPLATES[template]
+
   const items = cvData
     ? [
         { type: 'header' },
@@ -45,13 +48,13 @@ export default function CVPreview({ cvData, zoom = 100 }) {
       ]
     : []
 
-  const { measureRef, pages } = usePagination(cvData)
+  const { measureRef, pages } = usePagination(cvData, tpl.paddingV)
 
   if (!cvData) {
     return (
       <div className="previewWrapper">
-        <div className="page">
-          <div className="emptyState">Escribe tu YAML en el editor para ver el preview</div>
+        <div className="page" data-template={template}>
+          <div className="emptyState">Write your YAML in the editor to see the preview</div>
         </div>
       </div>
     )
@@ -66,18 +69,24 @@ export default function CVPreview({ cvData, zoom = 100 }) {
 
   const visiblePages = pages || [items.map((_, i) => i)]
 
+  const pageStyle = {
+    padding: `${tpl.paddingV}px ${tpl.paddingH}px`,
+  }
+
+  const measureStyle = {
+    position: 'fixed', top: 0, left: '-9999px', visibility: 'hidden',
+    width: '816px',
+    padding: `${tpl.paddingV}px ${tpl.paddingH}px 0`,
+    fontFamily: tpl.fontFamily,
+    fontSize: '10pt',
+    lineHeight: '1.35',
+    pointerEvents: 'none',
+    boxSizing: 'border-box',
+  }
+
   return (
     <div className="previewWrapper">
-      <div
-        ref={measureRef}
-        aria-hidden="true"
-        style={{
-          position: 'fixed', top: 0, left: '-9999px', visibility: 'hidden',
-          width: '816px', padding: `${PAGE_PADDING_V}px 58px 0`, boxSizing: 'border-box',
-          fontFamily: "'Times New Roman', Times, serif", fontSize: '10pt',
-          lineHeight: '1.35', pointerEvents: 'none',
-        }}
-      >
+      <div ref={measureRef} aria-hidden="true" style={measureStyle}>
         {items.map((item, idx) => (
           <div key={idx} data-idx={idx}>
             {item.type === 'header'
@@ -92,7 +101,9 @@ export default function CVPreview({ cvData, zoom = 100 }) {
         {visiblePages.map((pageItems, pageIdx) => (
           <div key={pageIdx}>
             {pageIdx > 0 && <div className="pageBreakShadow" />}
-            <div className="page">{pageItems.map(renderItem)}</div>
+            <div className="page" data-template={template} style={pageStyle}>
+              {pageItems.map(renderItem)}
+            </div>
           </div>
         ))}
       </div>

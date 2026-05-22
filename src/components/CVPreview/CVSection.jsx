@@ -21,7 +21,7 @@ function renderEntry(entry, index) {
 function hasBulletType(entries) {
   return entries.every(e => {
     const t = detectEntryType(e)
-    return t === 'bullet' || t === 'numbered' || t === 'text'
+    return t === 'bullet' || t === 'numbered'
   })
 }
 

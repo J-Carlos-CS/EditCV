@@ -4,26 +4,13 @@ import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
 import CVHeader from '../components/CVPreview/sections/CVHeader'
 import CVSection from '../components/CVPreview/CVSection'
+import { TEMPLATES } from '../templates/index'
 
 const PAGE_W_PX = 816
 const PAGE_H_PX = 1056
 const PDF_W_PT = 612
 const PDF_H_PT = 792
-const PAD_V_PX = 32
-const PAD_H_PX = 58
 const SCALE = 3
-
-function makeContainerStyle(height = null) {
-  return [
-    'position:fixed', 'top:0', 'left:-9999px', 'z-index:-1',
-    `width:${PAGE_W_PX}px`,
-    height ? `height:${height}px` : '',
-    `padding:0 ${PAD_H_PX}px`,
-    "font-family:'Times New Roman',Times,serif", 'font-size:10pt',
-    'line-height:1.35', 'color:#000', 'background:#fff',
-    'box-sizing:border-box',
-  ].filter(Boolean).join(';')
-}
 
 function renderItem(item, cvData) {
   if (item.type === 'header') return <CVHeader cv={cvData} />
@@ -37,7 +24,17 @@ async function mountAndWait(container, element) {
   return root
 }
 
-export async function exportToPDF(cvData, filename = 'cv.pdf') {
+export async function exportToPDF(cvData, filename = 'cv.pdf', templateId = 'harvard') {
+  const tpl = TEMPLATES[templateId] ?? TEMPLATES.harvard
+
+  const baseStyle = [
+    'position:fixed', 'top:0', 'left:-9999px', 'z-index:-1',
+    `width:${PAGE_W_PX}px`,
+    `padding:0 ${tpl.paddingH}px`,
+    'background:#fff',
+    'box-sizing:border-box',
+  ].join(';')
+
   const sections = cvData?.sections || {}
   const items = [
     { type: 'header' },
@@ -46,7 +43,8 @@ export async function exportToPDF(cvData, filename = 'cv.pdf') {
 
   // ── Step 1: measure each item's height ──────────────────────
   const measureDiv = document.createElement('div')
-  measureDiv.style.cssText = makeContainerStyle()
+  measureDiv.setAttribute('data-template', templateId)
+  measureDiv.style.cssText = baseStyle
   document.body.appendChild(measureDiv)
 
   const measureRoot = await mountAndWait(measureDiv,
@@ -63,8 +61,8 @@ export async function exportToPDF(cvData, filename = 'cv.pdf') {
   measureRoot.unmount()
   document.body.removeChild(measureDiv)
 
-  // ── Step 2: paginate (same logic as CVPreview) ───────────────
-  const available = PAGE_H_PX - PAD_V_PX * 2
+  // ── Step 2: paginate ─────────────────────────────────────────
+  const available = PAGE_H_PX - tpl.paddingV * 2
   const pages = []
   let page = [], used = 0
 
@@ -86,12 +84,12 @@ export async function exportToPDF(cvData, filename = 'cv.pdf') {
 
   for (let pi = 0; pi < pages.length; pi++) {
     const pageDiv = document.createElement('div')
+    pageDiv.setAttribute('data-template', templateId)
     pageDiv.style.cssText = [
       'position:fixed', 'top:0', 'left:-9999px', 'z-index:-1',
       `width:${PAGE_W_PX}px`, `height:${PAGE_H_PX}px`,
-      `padding:${PAD_V_PX}px ${PAD_H_PX}px`,
-      "font-family:'Times New Roman',Times,serif", 'font-size:10pt',
-      'line-height:1.35', 'color:#000', 'background:#fff',
+      `padding:${tpl.paddingV}px ${tpl.paddingH}px`,
+      'background:#fff',
       'box-sizing:border-box', 'overflow:hidden',
     ].join(';')
     document.body.appendChild(pageDiv)

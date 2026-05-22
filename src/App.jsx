@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ThemeProvider } from './context/ThemeContext'
+import { TemplateProvider, useTemplate } from './context/TemplateContext'
+import { TEMPLATES } from './templates/index'
 import Navbar from './components/Navbar/Navbar'
 import Sidebar from './components/Sidebar/Sidebar'
 import Editor from './components/Editor/Editor'
@@ -17,8 +19,8 @@ function AppInner() {
   const [exporting, setExporting] = useState(false)
   const [zoom, setZoom] = useState(150)
   const saveTimerRef = useRef(null)
+  const { template, setTemplate } = useTemplate()
 
-  // Load CVs from localStorage on mount
   useEffect(() => {
     let stored = loadCVs()
     if (stored.length === 0) {
@@ -35,14 +37,12 @@ function AppInner() {
     setYamlText(active.yaml)
   }, [])
 
-  // Parse YAML on change
   useEffect(() => {
     const { data, error } = parseCV(yamlText)
     setParsedCV(data)
     setParseError(error)
   }, [yamlText])
 
-  // Autosave with debounce
   useEffect(() => {
     if (!activeCVId || !yamlText) return
     clearTimeout(saveTimerRef.current)
@@ -74,11 +74,11 @@ function AppInner() {
     setExporting(true)
     try {
       const name = parsedCV?.name || 'cv'
-      await exportToPDF(parsedCV, `${name}.pdf`)
+      await exportToPDF(parsedCV, `${name}.pdf`, template)
     } finally {
       setExporting(false)
     }
-  }, [parsedCV, exporting])
+  }, [parsedCV, exporting, template])
 
   return (
     <div className="app">
@@ -103,12 +103,22 @@ function AppInner() {
                 <button className="zoomBtn" onClick={() => setZoom(z => Math.min(200, z + 10))} title="Zoom in">+</button>
                 <button className="zoomBtn zoomReset" onClick={() => setZoom(100)} title="Reset zoom">⊙</button>
               </div>
+              <select
+                className="templateSelect"
+                value={template}
+                onChange={e => setTemplate(e.target.value)}
+                title="Template"
+              >
+                {Object.values(TEMPLATES).map(t => (
+                  <option key={t.id} value={t.id}>{t.label}</option>
+                ))}
+              </select>
               <button
                 className="exportBtn"
                 onClick={handleExport}
                 disabled={exporting || !!parseError || !parsedCV}
               >
-                {exporting ? 'Exportando...' : '⬇ Descargar PDF'}
+                {exporting ? 'Exporting...' : '⬇ Download PDF'}
               </button>
             </div>
             <CVPreview cvData={parsedCV} zoom={zoom} />
@@ -122,7 +132,9 @@ function AppInner() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AppInner />
+      <TemplateProvider>
+        <AppInner />
+      </TemplateProvider>
     </ThemeProvider>
   )
 }

@@ -21,6 +21,7 @@ export function detectEntryType(entry) {
   if ('bullet' in entry) return 'bullet'
   if ('reversed_number' in entry) return 'numbered'
   if ('number' in entry) return 'numbered'
+  if ('summary' in entry && !('bullet' in entry) && !('institution' in entry) && !('company' in entry) && !('name' in entry)) return 'summary'
   if (typeof entry === 'string') return 'text'
   return 'text'
 }

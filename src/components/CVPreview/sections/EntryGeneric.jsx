@@ -13,5 +13,8 @@ export default function EntryGeneric({ entry }) {
   if (entry.number) {
     return <li className="genericBullet"><MD text={entry.number} /></li>
   }
+  if (entry.summary) {
+    return <MD text={entry.summary} className="genericText" tag="p" />
+  }
   return null
 }
