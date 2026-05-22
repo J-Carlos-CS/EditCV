@@ -1,6 +1,5 @@
 import { formatDateRange } from '../../../utils/yamlParser'
 import MD from '../MD'
-import styles from '../CVPreview.module.css'
 
 function renderHighlight(h, i) {
   if (typeof h === 'string') return <li key={i}><MD text={h} /></li>
@@ -9,7 +8,7 @@ function renderHighlight(h, i) {
     if (Array.isArray(text)) {
       return (
         <li key={i}>
-          <ul className={styles.subBullets}>
+          <ul className="subBullets">
             {text.map((sub, j) => <li key={j}><MD text={sub} /></li>)}
           </ul>
         </li>
@@ -23,20 +22,20 @@ function renderHighlight(h, i) {
 export default function EntryExperience({ entry }) {
   const date = formatDateRange(entry.start_date, entry.end_date, entry.date)
   return (
-    <div className={styles.entry}>
-      <div className={styles.entryHeader}>
-        <div className={styles.entryLeft}>
-          <span className={styles.entryTitle}>{entry.company}</span>
-          {entry.position && <span className={styles.entrySubtitle}>{entry.position}</span>}
-          {entry.summary && <MD text={entry.summary} className={styles.entrySummary} tag="p" />}
+    <div className="entry">
+      <div className="entryHeader">
+        <div className="entryLeft">
+          <span className="entryTitle">{entry.company}</span>
+          {entry.position && <span className="entrySubtitle">{entry.position}</span>}
+          {entry.summary && <MD text={entry.summary} className="entrySummary" tag="p" />}
         </div>
-        <div className={styles.entryRight}>
-          {entry.location && <span className={styles.entryLocation}>{entry.location}</span>}
-          {date && <span className={styles.entryDate}>{date}</span>}
+        <div className="entryRight">
+          {entry.location && <span className="entryLocation">{entry.location}</span>}
+          {date && <span className="entryDate">{date}</span>}
         </div>
       </div>
       {entry.highlights && entry.highlights.length > 0 && (
-        <ul className={styles.bullets}>
+        <ul className="bullets">
           {entry.highlights.map((h, i) => renderHighlight(h, i))}
         </ul>
       )}

@@ -1,31 +1,29 @@
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
-export async function exportToPDF(element, filename = 'cv.pdf') {
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: '#ffffff',
-  })
+export async function exportToPDF(wrapperElement, filename = 'cv.pdf') {
+  const pageEls = Array.from(wrapperElement.querySelectorAll('.page'))
+  if (pageEls.length === 0) return
 
-  const imgData = canvas.toDataURL('image/png')
   const pdf = new jsPDF('p', 'mm', 'letter')
-  const pageWidth = pdf.internal.pageSize.getWidth()
-  const pageHeight = pdf.internal.pageSize.getHeight()
-  const imgWidth = pageWidth
-  const imgHeight = (canvas.height * pageWidth) / canvas.width
+  const pdfW = pdf.internal.pageSize.getWidth()
+  const pdfH = pdf.internal.pageSize.getHeight()
 
-  let yOffset = 0
-  let heightLeft = imgHeight
+  for (let i = 0; i < pageEls.length; i++) {
+    const canvas = await html2canvas(pageEls[i], {
+      scale: 1.5,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+    })
 
-  pdf.addImage(imgData, 'PNG', 0, yOffset, imgWidth, imgHeight)
-  heightLeft -= pageHeight
+    // JPEG at 0.85 quality — ~10x smaller than PNG, imperceptible for text
+    const imgData = canvas.toDataURL('image/jpeg', 0.85)
+    const imgW = pdfW
+    const imgH = (canvas.height / canvas.width) * pdfW
 
-  while (heightLeft > 0) {
-    yOffset = heightLeft - imgHeight
-    pdf.addPage()
-    pdf.addImage(imgData, 'PNG', 0, yOffset, imgWidth, imgHeight)
-    heightLeft -= pageHeight
+    if (i > 0) pdf.addPage()
+    const yOffset = imgH < pdfH ? (pdfH - imgH) / 2 : 0
+    pdf.addImage(imgData, 'JPEG', 0, yOffset, imgW, imgH)
   }
 
   pdf.save(filename)

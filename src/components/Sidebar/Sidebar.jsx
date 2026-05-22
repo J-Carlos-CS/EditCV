@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { createCV, saveCV, deleteCV } from '../../utils/storage'
-import styles from './Sidebar.module.css'
 
 export default function Sidebar({ cvs, activeCVId, onSelect, onCVsChange }) {
   const [editingId, setEditingId] = useState(null)
@@ -38,20 +37,20 @@ export default function Sidebar({ cvs, activeCVId, onSelect, onCVsChange }) {
   }
 
   return (
-    <aside className={styles.sidebar}>
-      <button className={styles.newBtn} onClick={handleNew}>
+    <aside className="sidebar">
+      <button className="newBtn" onClick={handleNew}>
         + Nuevo CV
       </button>
-      <ul className={styles.list}>
+      <ul className="list">
         {cvs.map(cv => (
           <li
             key={cv.id}
-            className={`${styles.item} ${cv.id === activeCVId ? styles.active : ''}`}
+            className={`item ${cv.id === activeCVId ? 'active' : ''}`}
             onClick={() => onSelect(cv.id)}
           >
             {editingId === cv.id ? (
               <input
-                className={styles.renameInput}
+                className="renameInput"
                 value={editingName}
                 autoFocus
                 onChange={e => setEditingName(e.target.value)}
@@ -61,15 +60,15 @@ export default function Sidebar({ cvs, activeCVId, onSelect, onCVsChange }) {
               />
             ) : (
               <>
-                <span className={styles.cvName}>{cv.name}</span>
-                <span className={styles.actions}>
+                <span className="sidebarItemName">{cv.name}</span>
+                <span className="actions">
                   <button
-                    className={styles.iconBtn}
+                    className="iconBtn"
                     title="Renombrar"
                     onClick={e => handleRenameStart(e, cv)}
                   >✏️</button>
                   <button
-                    className={styles.iconBtn}
+                    className="iconBtn"
                     title="Eliminar"
                     onClick={e => handleDelete(e, cv.id)}
                     disabled={cvs.length === 1}

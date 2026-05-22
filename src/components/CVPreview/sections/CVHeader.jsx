@@ -1,5 +1,3 @@
-import styles from '../CVPreview.module.css'
-
 export default function CVHeader({ cv }) {
   const socials = cv.social_networks || []
   const customs = cv.custom_connections || []
@@ -14,14 +12,14 @@ export default function CVHeader({ cv }) {
   ].filter(Boolean)
 
   return (
-    <header className={styles.cvHeader}>
-      <h1 className={styles.cvName}>{cv.name}</h1>
-      {cv.headline && <p className={styles.cvHeadline}>{cv.headline}</p>}
+    <header className="cvHeader">
+      <h1 className="cvName">{cv.name}</h1>
+      {cv.headline && <p className="cvHeadline">{cv.headline}</p>}
       {contactItems.length > 0 && (
-        <p className={styles.cvContact}>
+        <p className="cvContact">
           {contactItems.map((item, i) => (
             <span key={i}>
-              {i > 0 && <span className={styles.contactSep}> • </span>}
+              {i > 0 && <span className="contactSep"> • </span>}
               {item}
             </span>
           ))}

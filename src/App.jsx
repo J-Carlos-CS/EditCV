@@ -7,7 +7,6 @@ import CVPreview from './components/CVPreview/CVPreview'
 import { parseCV } from './utils/yamlParser'
 import { loadCVs, saveCV, createCV, getActiveId, setActiveId } from './utils/storage'
 import { exportToPDF } from './utils/pdfExport'
-import styles from './App.module.css'
 
 function AppInner() {
   const [cvs, setCVs] = useState([])
@@ -82,23 +81,23 @@ function AppInner() {
   }, [parsedCV, exporting])
 
   return (
-    <div className={styles.app}>
+    <div className="app">
       <Navbar />
-      <div className={styles.body}>
+      <div className="body">
         <Sidebar
           cvs={cvs}
           activeCVId={activeCVId}
           onSelect={handleSelectCV}
           onCVsChange={handleCVsChange}
         />
-        <div className={styles.editorPane}>
+        <div className="editorPane">
           <Editor value={yamlText} onChange={setYamlText} error={parseError} />
         </div>
-        <div className={styles.previewPane}>
-          <div className={styles.previewToolbar}>
-            <span className={styles.previewLabel}>Preview — US Letter</span>
+        <div className="previewPane">
+          <div className="previewToolbar">
+            <span className="previewLabel">Preview — US Letter</span>
             <button
-              className={styles.exportBtn}
+              className="exportBtn"
               onClick={handleExport}
               disabled={exporting || !!parseError || !parsedCV}
             >

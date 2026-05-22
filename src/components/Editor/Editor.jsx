@@ -1,9 +1,10 @@
 import { useRef } from 'react'
 import MonacoEditor from '@monaco-editor/react'
-import styles from './Editor.module.css'
+import { useTheme } from '../../context/ThemeContext'
 
 export default function Editor({ value, onChange, error }) {
   const editorRef = useRef(null)
+  const { theme } = useTheme()
 
   function handleMount(editor) {
     editorRef.current = editor
@@ -11,15 +12,15 @@ export default function Editor({ value, onChange, error }) {
   }
 
   return (
-    <div className={styles.editorWrapper}>
-      <div className={styles.header}>
-        <span className={styles.label}>YAML Editor</span>
-        {error && <span className={styles.errorBadge}>Error de sintaxis</span>}
+    <div className="editorWrapper">
+      <div className="editorHeader">
+        <span className="editorLabel">YAML Editor</span>
+        {error && <span className="errorBadge">Error de sintaxis</span>}
       </div>
-      <div className={styles.monacoContainer}>
+      <div className="monacoContainer">
         <MonacoEditor
           language="yaml"
-          theme="vs-dark"
+          theme={theme === 'light' ? 'vs' : 'vs-dark'}
           value={value}
           onChange={val => onChange(val ?? '')}
           onMount={handleMount}
@@ -47,7 +48,7 @@ export default function Editor({ value, onChange, error }) {
           }}
         />
       </div>
-      {error && <div className={styles.errorMsg}>{error}</div>}
+      {error && <div className="errorMsg">{error}</div>}
     </div>
   )
 }

@@ -5,7 +5,6 @@ import EntryProject from './sections/EntryProject'
 import EntryPublication from './sections/EntryPublication'
 import EntrySkill from './sections/EntrySkill'
 import EntryGeneric from './sections/EntryGeneric'
-import styles from './CVPreview.module.css'
 
 function renderEntry(entry, index) {
   const type = detectEntryType(entry)
@@ -32,10 +31,10 @@ export default function CVSection({ title, entries }) {
   const wrapInList = hasBulletType(entries)
 
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>{title}</h2>
+    <section className="section">
+      <h2 className="sectionTitle">{title}</h2>
       {wrapInList ? (
-        <ul className={styles.genericList}>
+        <ul className="genericList">
           {entries.map((e, i) => renderEntry(e, i))}
         </ul>
       ) : (
