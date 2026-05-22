@@ -37,7 +37,7 @@ function usePagination(cvData) {
   return { measureRef, pages }
 }
 
-export default function CVPreview({ cvData }) {
+export default function CVPreview({ cvData, zoom = 100 }) {
   const items = cvData
     ? [
         { type: 'header' },
@@ -88,12 +88,14 @@ export default function CVPreview({ cvData }) {
         ))}
       </div>
 
-      {visiblePages.map((pageItems, pageIdx) => (
-        <div key={pageIdx} style={{ display: 'contents' }}>
-          {pageIdx > 0 && <div className="pageBreakShadow" />}
-          <div className="page">{pageItems.map(renderItem)}</div>
-        </div>
-      ))}
+      <div style={{ zoom: `${zoom}%` }}>
+        {visiblePages.map((pageItems, pageIdx) => (
+          <div key={pageIdx}>
+            {pageIdx > 0 && <div className="pageBreakShadow" />}
+            <div className="page">{pageItems.map(renderItem)}</div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

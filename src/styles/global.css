@@ -62,6 +62,29 @@ body {
   border-radius: 3px;
 }
 
+.previewWrapper::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.previewWrapper::-webkit-scrollbar-corner {
+  background: var(--preview-bg);
+}
+
+.previewWrapper::-webkit-scrollbar-track {
+  background: var(--preview-bg);
+}
+
+.previewWrapper::-webkit-scrollbar-thumb {
+  background: var(--text-secondary);
+  border-radius: 5px;
+  border: 2px solid var(--preview-bg);
+}
+
+.previewWrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--text-primary);
+}
+
 /* ── App layout ─────────────────────────────────────────────── */
 .app {
   display: flex;
@@ -153,6 +176,45 @@ body {
 .exportBtn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+.zoomControls {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.zoomBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: var(--hover);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.12s;
+  line-height: 1;
+}
+
+.zoomBtn:hover {
+  background: var(--border);
+}
+
+.zoomReset {
+  font-size: 0.75rem;
+}
+
+.zoomLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 36px;
+  text-align: center;
 }
 
 /* ── Navbar ─────────────────────────────────────────────────── */
@@ -386,7 +448,7 @@ body {
 /* ── CV Preview wrapper ──────────────────────────────────────── */
 .previewWrapper {
   flex: 1;
-  overflow-y: auto;
+  overflow: auto;
   background: var(--preview-bg);
   display: flex;
   flex-direction: column;

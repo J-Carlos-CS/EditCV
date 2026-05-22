@@ -15,6 +15,7 @@ function AppInner() {
   const [parsedCV, setParsedCV] = useState(null)
   const [parseError, setParseError] = useState(null)
   const [exporting, setExporting] = useState(false)
+  const [zoom, setZoom] = useState(150)
   const saveTimerRef = useRef(null)
 
   // Load CVs from localStorage on mount
@@ -96,6 +97,12 @@ function AppInner() {
           <div className="previewPane">
             <div className="previewToolbar">
               <span className="previewLabel">Preview — US Letter</span>
+              <div className="zoomControls">
+                <button className="zoomBtn" onClick={() => setZoom(z => Math.max(25, z - 10))} title="Zoom out">−</button>
+                <span className="zoomLabel">{zoom}%</span>
+                <button className="zoomBtn" onClick={() => setZoom(z => Math.min(200, z + 10))} title="Zoom in">+</button>
+                <button className="zoomBtn zoomReset" onClick={() => setZoom(100)} title="Reset zoom">⊙</button>
+              </div>
               <button
                 className="exportBtn"
                 onClick={handleExport}
@@ -104,7 +111,7 @@ function AppInner() {
                 {exporting ? 'Exportando...' : '⬇ Descargar PDF'}
               </button>
             </div>
-            <CVPreview cvData={parsedCV} />
+            <CVPreview cvData={parsedCV} zoom={zoom} />
           </div>
         </div>
       </div>
