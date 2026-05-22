@@ -90,21 +90,23 @@ function AppInner() {
           onSelect={handleSelectCV}
           onCVsChange={handleCVsChange}
         />
-        <div className="editorPane">
-          <Editor value={yamlText} onChange={setYamlText} error={parseError} />
-        </div>
-        <div className="previewPane">
-          <div className="previewToolbar">
-            <span className="previewLabel">Preview — US Letter</span>
-            <button
-              className="exportBtn"
-              onClick={handleExport}
-              disabled={exporting || !!parseError || !parsedCV}
-            >
-              {exporting ? 'Exportando...' : '⬇ Descargar PDF'}
-            </button>
+        <div className="mainCard">
+          <div className="editorPane">
+            <Editor value={yamlText} onChange={setYamlText} error={parseError} />
           </div>
-          <CVPreview ref={previewRef} cvData={parsedCV} />
+          <div className="previewPane">
+            <div className="previewToolbar">
+              <span className="previewLabel">Preview — US Letter</span>
+              <button
+                className="exportBtn"
+                onClick={handleExport}
+                disabled={exporting || !!parseError || !parsedCV}
+              >
+                {exporting ? 'Exportando...' : '⬇ Descargar PDF'}
+              </button>
+            </div>
+            <CVPreview ref={previewRef} cvData={parsedCV} />
+          </div>
         </div>
       </div>
     </div>
