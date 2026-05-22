@@ -7,7 +7,7 @@ import './FormEditor.css'
 export default function Editor({ value, onChange, error, parsedCV }) {
   const editorRef = useRef(null)
   const { theme } = useTheme()
-  const [mode, setMode] = useState('yaml')
+  const [mode, setMode] = useState('form')
 
   function handleMount(editor) {
     editorRef.current = editor

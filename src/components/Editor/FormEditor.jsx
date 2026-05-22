@@ -263,8 +263,8 @@ const SECTION_TYPE_OPTIONS = [
 ]
 
 // ── Section Panel ─────────────────────────────────────────────
-function SectionPanel({ name, entries = [], onChange, onDelete, onRename }) {
-  const [open, setOpen] = useState(true)
+function SectionPanel({ name, entries = [], onChange, onDelete, onRename, onMoveUp, onMoveDown }) {
+  const [open, setOpen] = useState(false)
   const [renaming, setRenaming] = useState(false)
   const [renameVal, setRenameVal] = useState(name)
   const type = getSectionType(name, entries)
@@ -313,6 +313,8 @@ function SectionPanel({ name, entries = [], onChange, onDelete, onRename }) {
           <span className="ff-badge">{entries.length}</span>
         </button>
         <div className="ff-section-meta-actions">
+          <button className="ff-act" onClick={e => { e.stopPropagation(); onMoveUp() }}   disabled={!onMoveUp}   title="Move up">↑</button>
+          <button className="ff-act" onClick={e => { e.stopPropagation(); onMoveDown() }} disabled={!onMoveDown} title="Move down">↓</button>
           <button className="ff-act" onClick={startRename} title="Rename section">✎</button>
           <button className="ff-act ff-act-del" onClick={onDelete} title="Delete section">×</button>
         </div>
@@ -447,6 +449,15 @@ export default function FormEditor({ cvData, onYamlChange }) {
     setShowAddSection(false)
   }
 
+  function moveSection(name, dir) {
+    const entries = Object.entries(data.sections || {})
+    const i = entries.findIndex(([k]) => k === name)
+    const j = i + dir
+    if (j < 0 || j >= entries.length) return
+    ;[entries[i], entries[j]] = [entries[j], entries[i]]
+    update({ ...data, sections: Object.fromEntries(entries) })
+  }
+
   const sections = data.sections || {}
 
   return (
@@ -501,7 +512,7 @@ export default function FormEditor({ cvData, onYamlChange }) {
       {/* ── CV Sections ── */}
       <div className="ff-group">
         <div className="ff-group-title">Sections</div>
-        {Object.entries(sections).map(([name, entries]) => (
+        {Object.entries(sections).map(([name, entries], i, arr) => (
           <SectionPanel
             key={name}
             name={name}
@@ -509,6 +520,8 @@ export default function FormEditor({ cvData, onYamlChange }) {
             onChange={ents => setSection(name, ents)}
             onDelete={() => deleteSection(name)}
             onRename={newName => renameSection(name, newName)}
+            onMoveUp={i > 0 ? () => moveSection(name, -1) : null}
+            onMoveDown={i < arr.length - 1 ? () => moveSection(name, 1) : null}
           />
         ))}
         <button className="ff-add-section-btn" onClick={() => setShowAddSection(true)}>

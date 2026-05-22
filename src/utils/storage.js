@@ -46,7 +46,7 @@ function defaultYaml(name) {
   location: Santa Cruz de la Sierra, Bolivia
   email: mario.mendoza@email.com
   phone: +591 7 123 4567
-  website: https://carlosmendoza.dev
+  website: https://mariomendoza.dev
   social_networks:
     - network: LinkedIn
       username: mario-mendoza-bo
