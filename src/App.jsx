@@ -6,7 +6,7 @@ import Editor from './components/Editor/Editor'
 import CVPreview from './components/CVPreview/CVPreview'
 import { parseCV } from './utils/yamlParser'
 import { loadCVs, saveCV, createCV, getActiveId, setActiveId } from './utils/storage'
-import { exportToPDF } from './utils/pdfExportVector'
+import { exportToPDF } from './utils/pdfExport'
 
 function AppInner() {
   const [cvs, setCVs] = useState([])
@@ -15,7 +15,6 @@ function AppInner() {
   const [parsedCV, setParsedCV] = useState(null)
   const [parseError, setParseError] = useState(null)
   const [exporting, setExporting] = useState(false)
-  const previewRef = useRef(null)
   const saveTimerRef = useRef(null)
 
   // Load CVs from localStorage on mount
@@ -105,7 +104,7 @@ function AppInner() {
                 {exporting ? 'Exportando...' : '⬇ Descargar PDF'}
               </button>
             </div>
-            <CVPreview ref={previewRef} cvData={parsedCV} />
+            <CVPreview cvData={parsedCV} />
           </div>
         </div>
       </div>

@@ -648,35 +648,3 @@ body {
   margin: 0 0 3pt;
 }
 
-/* ── Print styles ───────────────────────────────────────────── */
-@media print {
-  @page {
-    size: letter;
-    margin: 0;
-  }
-
-  body > *:not(#print-root) {
-    display: none !important;
-  }
-
-  #print-root {
-    display: block !important;
-  }
-
-  #print-root .page {
-    width: 8.5in !important;
-    min-height: 11in !important;
-    padding: 0.4in 0.6in !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
-    background: #fff !important;
-    page-break-after: always;
-    break-after: page;
-  }
-
-  #print-root .page:last-child {
-    page-break-after: avoid;
-    break-after: avoid;
-  }
-}
