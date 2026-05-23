@@ -6,33 +6,40 @@ import { TEMPLATES } from '../../templates/index'
 
 const PAGE_HEIGHT = 1056
 
-function usePagination(cvData, paddingV) {
+function usePagination(cvData, paddingV, template) {
   const measureRef = useRef(null)
   const [pages, setPages] = useState(null)
 
   useLayoutEffect(() => {
     if (!measureRef.current || !cvData) { setPages(null); return }
-    const children = Array.from(measureRef.current.children)
-    if (!children.length) return
+    let cancelled = false
 
-    const available = PAGE_HEIGHT - paddingV * 2
-    const groups = []
-    let page = [], height = 0
+    document.fonts.ready.then(() => {
+      if (cancelled || !measureRef.current) return
+      const children = Array.from(measureRef.current.children)
+      if (!children.length) return
 
-    for (const child of children) {
-      const h = child.getBoundingClientRect().height
-      if (page.length > 0 && height + h > available) {
-        groups.push(page)
-        page = [Number(child.dataset.idx)]
-        height = h
-      } else {
-        page.push(Number(child.dataset.idx))
-        height += h
+      const available = PAGE_HEIGHT - paddingV * 2
+      const groups = []
+      let page = [], height = 0
+
+      for (const child of children) {
+        const h = child.getBoundingClientRect().height
+        if (page.length > 0 && height + h > available) {
+          groups.push(page)
+          page = [Number(child.dataset.idx)]
+          height = h
+        } else {
+          page.push(Number(child.dataset.idx))
+          height += h
+        }
       }
-    }
-    if (page.length) groups.push(page)
-    setPages(groups)
-  }, [cvData, paddingV])
+      if (page.length) groups.push(page)
+      setPages(groups)
+    })
+
+    return () => { cancelled = true }
+  }, [cvData, paddingV, template])
 
   return { measureRef, pages }
 }
@@ -48,7 +55,7 @@ export default function CVPreview({ cvData, zoom = 100 }) {
       ]
     : []
 
-  const { measureRef, pages } = usePagination(cvData, tpl.paddingV)
+  const { measureRef, pages } = usePagination(cvData, tpl.paddingV, template)
 
   if (!cvData) {
     return (
