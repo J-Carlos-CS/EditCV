@@ -4,12 +4,50 @@ import { useTheme } from '../../context/ThemeContext'
 import FormEditor from './FormEditor'
 import './FormEditor.css'
 
+/**
+ * Monaco editor configuration that stays constant across renders.
+ * Defined outside the component so the object reference is stable and
+ * Monaco doesn't unnecessarily re-apply options on every re-render.
+ */
+const MONACO_OPTIONS = {
+  fontSize: 13,
+  fontFamily: "'Cascadia Code', 'Fira Code', Consolas, monospace",
+  fontLigatures: true,
+  lineNumbers: 'on',
+  minimap: { enabled: false },
+  folding: true,
+  foldingHighlight: true,
+  foldingStrategy: 'indentation',
+  showFoldingControls: 'always',
+  wordWrap: 'off',
+  scrollBeyondLastLine: false,
+  automaticLayout: true,
+  scrollbar: {
+    vertical: 'visible',
+    horizontal: 'visible',
+    verticalScrollbarSize: 6,
+    horizontalScrollbarSize: 6,
+    useShadows: false,
+  },
+  overviewRulerLanes: 0,
+  overviewRulerBorder: false,
+  hideCursorInOverviewRuler: true,
+  tabSize: 2,
+  renderLineHighlight: 'all',
+  cursorBlinking: 'smooth',
+  smoothScrolling: true,
+  bracketPairColorization: { enabled: true },
+  guides: { indentation: true, bracketPairs: true },
+  renderWhitespace: 'selection',
+  padding: { top: 8, bottom: 8 },
+}
+
 export default function Editor({ value, onChange, error, parsedCV }) {
   const editorRef = useRef(null)
   const { theme } = useTheme()
   const [mode, setMode] = useState('form')
 
-  function handleMount(editor) {
+  function handleEditorMount(editor) {
     editorRef.current = editor
     editor.updateOptions({ tabSize: 2, insertSpaces: true })
   }
@@ -47,39 +85,8 @@ export default function Editor({ value, onChange, error, parsedCV }) {
               theme={theme === 'light' ? 'vs' : 'vs-dark'}
               value={value}
               onChange={val => onChange(val ?? '')}
-              onMount={handleMount}
-              options={{
-                fontSize: 13,
-                fontFamily: "'Cascadia Code', 'Fira Code', Consolas, monospace",
-                fontLigatures: true,
-                lineNumbers: 'on',
-                minimap: { enabled: false },
-                folding: true,
-                foldingHighlight: true,
-                foldingStrategy: 'indentation',
-                showFoldingControls: 'always',
-                wordWrap: 'off',
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                scrollbar: {
-                  vertical: 'visible',
-                  horizontal: 'visible',
-                  verticalScrollbarSize: 6,
-                  horizontalScrollbarSize: 6,
-                  useShadows: false,
-                },
-                overviewRulerLanes: 0,
-                overviewRulerBorder: false,
-                hideCursorInOverviewRuler: true,
-                tabSize: 2,
-                renderLineHighlight: 'all',
-                cursorBlinking: 'smooth',
-                smoothScrolling: true,
-                bracketPairColorization: { enabled: true },
-                guides: { indentation: true, bracketPairs: true },
-                renderWhitespace: 'selection',
-                padding: { top: 8, bottom: 8 },
-              }}
+              onMount={handleEditorMount}
+              options={MONACO_OPTIONS}
             />
           </div>
           {error && <div className="errorMsg">{error}</div>}

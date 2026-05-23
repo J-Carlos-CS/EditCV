@@ -1,35 +1,43 @@
 import { useState } from 'react'
 import { createCV, saveCV, deleteCV } from '../../utils/storage'
 
+// Defined outside the component so React doesn't recreate these on every render
+const IconPlus = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <line x1="7" y1="2" x2="7" y2="12" />
+    <line x1="2" y1="7" x2="12" y2="7" />
+  </svg>
+)
+
+const IconEdit = () => (
+  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 2l2 2-7 7H2v-2L9 2z" />
+  </svg>
+)
+
+const IconTrash = () => (
+  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="2,3 11,3" />
+    <path d="M4 3V2h5v1" />
+    <path d="M4.5 5l.5 5M8.5 5l-.5 5" />
+    <rect x="3" y="3" width="7" height="8" rx="1" />
+  </svg>
+)
+
 export default function Sidebar({ cvs, activeCVId, onSelect, onCVsChange }) {
-  const [editingId, setEditingId] = useState(null)
+  const [editingId, setEditingId]     = useState(null)
   const [editingName, setEditingName] = useState('')
 
-  const IconPlus = () => (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/>
-    </svg>
-  )
-  const IconEdit = () => (
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 2l2 2-7 7H2v-2L9 2z"/>
-    </svg>
-  )
-  const IconTrash = () => (
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="2,3 11,3"/><path d="M4 3V2h5v1"/><path d="M4.5 5l.5 5M8.5 5l-.5 5"/><rect x="3" y="3" width="7" height="8" rx="1"/>
-    </svg>
-  )
-
-  function handleNew() {
-    const cv = createCV('Nuevo CV')
-    saveCV(cv)
+  function handleNewCV() {
+    const newCV = createCV('Nuevo CV')
+    saveCV(newCV)
     onCVsChange()
-    onSelect(cv.id)
+    onSelect(newCV.id)
   }
 
-  function handleDelete(e, id) {
+  function handleDeleteCV(e, id) {
     e.stopPropagation()
+    // Always keep at least one CV so the editor is never empty
     if (cvs.length === 1) return
     deleteCV(id)
     onCVsChange()
@@ -39,22 +47,22 @@ export default function Sidebar({ cvs, activeCVId, onSelect, onCVsChange }) {
     }
   }
 
-  function handleRenameStart(e, cv) {
+  function startRenaming(e, cv) {
     e.stopPropagation()
     setEditingId(cv.id)
     setEditingName(cv.name)
   }
 
-  function handleRenameCommit(cv) {
-    const updated = { ...cv, name: editingName.trim() || cv.name }
-    saveCV(updated)
+  function commitRename(cv) {
+    const updatedCV = { ...cv, name: editingName.trim() || cv.name }
+    saveCV(updatedCV)
     onCVsChange()
     setEditingId(null)
   }
 
   return (
     <aside className="sidebar">
-      <button className="newBtn" onClick={handleNew}>
+      <button className="newBtn" onClick={handleNewCV}>
         <IconPlus /> Nuevo CV
       </button>
       <ul className="list">
@@ -70,8 +78,8 @@ export default function Sidebar({ cvs, activeCVId, onSelect, onCVsChange }) {
                 value={editingName}
                 autoFocus
                 onChange={e => setEditingName(e.target.value)}
-                onBlur={() => handleRenameCommit(cv)}
-                onKeyDown={e => e.key === 'Enter' && handleRenameCommit(cv)}
+                onBlur={() => commitRename(cv)}
+                onKeyDown={e => e.key === 'Enter' && commitRename(cv)}
                 onClick={e => e.stopPropagation()}
               />
             ) : (
@@ -81,14 +89,18 @@ export default function Sidebar({ cvs, activeCVId, onSelect, onCVsChange }) {
                   <button
                     className="iconBtn"
                     title="Renombrar"
-                    onClick={e => handleRenameStart(e, cv)}
-                  ><IconEdit /></button>
+                    onClick={e => startRenaming(e, cv)}
+                  >
+                    <IconEdit />
+                  </button>
                   <button
                     className="iconBtn"
                     title="Eliminar"
-                    onClick={e => handleDelete(e, cv.id)}
+                    onClick={e => handleDeleteCV(e, cv.id)}
                     disabled={cvs.length === 1}
-                  ><IconTrash /></button>
+                  >
+                    <IconTrash />
+                  </button>
                 </span>
               </>
             )}

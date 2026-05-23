@@ -26,6 +26,17 @@ export function detectEntryType(entry) {
   return 'text'
 }
 
+/**
+ * Converts a snake_case section key to a human-readable Title Case label.
+ * e.g. "selected_honors" → "Selected Honors"
+ */
+export function formatSectionTitle(snakeKey) {
+  return String(snakeKey)
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ')
+}
+
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 function parseMonthYear(str) {

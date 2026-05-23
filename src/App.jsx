@@ -8,65 +8,91 @@ import Editor from './components/Editor/Editor'
 import CVPreview from './components/CVPreview/CVPreview'
 import { parseCV } from './utils/yamlParser'
 import { loadCVs, saveCV, createCV, getActiveId, setActiveId } from './utils/storage'
-import { exportToPDF } from './utils/pdfExport'
+import { exportToPDF } from './utils/pdfExport.jsx'
 
+/**
+ * AppInner is the real application shell. It lives inside ThemeProvider and
+ * TemplateProvider so it can consume both contexts via their hooks.
+ *
+ * State flow:
+ *   user edits YAML / form
+ *     → yamlText changes
+ *     → parsedCV is recomputed
+ *     → CVPreview re-renders
+ *     → auto-save fires after 600 ms of inactivity
+ */
 function AppInner() {
-  const [cvs, setCVs] = useState([])
-  const [activeCVId, setActiveCVId] = useState(null)
-  const [yamlText, setYamlText] = useState('')
-  const [parsedCV, setParsedCV] = useState(null)
-  const [parseError, setParseError] = useState(null)
-  const [exporting, setExporting] = useState(false)
-  const [zoom, setZoom] = useState(100)
-  const saveTimerRef = useRef(null)
-  const previewPaneRef = useRef(null)
+  const [cvs, setCVs]             = useState([])          // Full list of CVs stored in localStorage
+  const [activeCVId, setActiveCVId] = useState(null)      // ID of the CV currently open in the editor
+  const [yamlText, setYamlText]   = useState('')           // Raw YAML string in the editor
+  const [parsedCV, setParsedCV]   = useState(null)         // Parsed CV data object (null when YAML is invalid)
+  const [parseError, setParseError] = useState(null)       // YAML parse error message, if any
+  const [exporting, setExporting] = useState(false)        // True while PDF export is in progress
+  const [zoom, setZoom]           = useState(100)          // Preview zoom level (25–200)
 
-  useEffect(() => {
-    const el = previewPaneRef.current
-    if (!el) return
-    const observer = new ResizeObserver(() => {
-      const available = el.clientWidth - 48 // 24px padding each side
-      const fitted = Math.round((available / 816) * 100)
-      setZoom(Math.max(25, Math.min(200, fitted)))
-    })
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
+  const saveTimerRef    = useRef(null)      // Holds the debounce timer ID for auto-save
+  const previewPaneRef  = useRef(null)      // Ref to the preview pane DOM element for ResizeObserver
+
   const { template, setTemplate } = useTemplate()
 
+  // ── Responsive zoom: fit the page to the available pane width ────────────
   useEffect(() => {
-    let stored = loadCVs()
-    if (stored.length === 0) {
-      const first = createCV('Mi CV')
-      saveCV(first)
-      stored = [first]
-    }
-    setCVs(stored)
+    const paneEl = previewPaneRef.current
+    if (!paneEl) return
 
-    const activeId = getActiveId()
-    const active = stored.find(c => c.id === activeId) || stored[0]
-    setActiveCVId(active.id)
-    setActiveId(active.id)
-    setYamlText(active.yaml)
+    const observer = new ResizeObserver(() => {
+      // 816px is the fixed width of a US Letter page at 96dpi
+      const availableWidth = paneEl.clientWidth - 48 // subtract 24px padding on each side
+      const fittedZoom     = Math.round((availableWidth / 816) * 100)
+      setZoom(Math.max(25, Math.min(200, fittedZoom)))
+    })
+
+    observer.observe(paneEl)
+    return () => observer.disconnect()
   }, [])
 
+  // ── Bootstrap: load CVs from localStorage on first render ────────────────
+  useEffect(() => {
+    let storedCVs = loadCVs()
+
+    // If there are no saved CVs yet, create a default one so the editor is never empty
+    if (storedCVs.length === 0) {
+      const defaultCV = createCV('Mi CV')
+      saveCV(defaultCV)
+      storedCVs = [defaultCV]
+    }
+
+    setCVs(storedCVs)
+
+    // Restore the last active CV, falling back to the first one
+    const lastActiveId = getActiveId()
+    const activeCV     = storedCVs.find(c => c.id === lastActiveId) || storedCVs[0]
+    setActiveCVId(activeCV.id)
+    setActiveId(activeCV.id)
+    setYamlText(activeCV.yaml)
+  }, [])
+
+  // ── Live parse: re-parse YAML on every keystroke ──────────────────────────
   useEffect(() => {
     const { data, error } = parseCV(yamlText)
     setParsedCV(data)
     setParseError(error)
   }, [yamlText])
 
+  // ── Auto-save: debounce saves so we don't hammer localStorage ────────────
   useEffect(() => {
     if (!activeCVId || !yamlText) return
+
     clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(() => {
-      const cv = cvs.find(c => c.id === activeCVId)
-      if (cv) {
-        const updated = { ...cv, yaml: yamlText, updatedAt: new Date().toISOString() }
-        saveCV(updated)
-        setCVs(loadCVs())
+      const currentCV = cvs.find(c => c.id === activeCVId)
+      if (currentCV) {
+        const updatedCV = { ...currentCV, yaml: yamlText, updatedAt: new Date().toISOString() }
+        saveCV(updatedCV)
+        setCVs(loadCVs()) // Refresh the sidebar list after saving
       }
     }, 600)
+
     return () => clearTimeout(saveTimerRef.current)
   }, [yamlText, activeCVId])
 
@@ -78,6 +104,7 @@ function AppInner() {
     setYamlText(cv.yaml)
   }
 
+  // Called by Sidebar after any create/delete/rename operation
   function handleCVsChange() {
     setCVs(loadCVs())
   }
@@ -86,8 +113,8 @@ function AppInner() {
     if (!parsedCV || exporting) return
     setExporting(true)
     try {
-      const name = parsedCV?.name || 'cv'
-      await exportToPDF(parsedCV, `${name}.pdf`, template)
+      const filename = `${parsedCV?.name || 'cv'}.pdf`
+      await exportToPDF(parsedCV, filename, template)
     } finally {
       setExporting(false)
     }
@@ -111,7 +138,7 @@ function AppInner() {
             <div className="previewToolbar">
               <span className="previewLabel">Preview — US Letter</span>
               <div className="zoomControls">
-                <button className="zoomBtn" onClick={() => setZoom(z => Math.max(25, z - 10))} title="Zoom out">−</button>
+                <button className="zoomBtn" onClick={() => setZoom(z => Math.max(25, z - 10))}  title="Zoom out">−</button>
                 <span className="zoomLabel">{zoom}%</span>
                 <button className="zoomBtn" onClick={() => setZoom(z => Math.min(200, z + 10))} title="Zoom in">+</button>
                 <button className="zoomBtn zoomReset" onClick={() => setZoom(100)} title="Reset zoom">⊙</button>

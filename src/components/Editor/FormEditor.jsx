@@ -1,32 +1,40 @@
 import { useState, useEffect, useRef } from 'react'
 import yaml from 'js-yaml'
+import { formatSectionTitle } from '../../utils/yamlParser'
 import './FormEditor.css'
 
-function toDisplayName(snakeKey) {
-  return snakeKey.toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-}
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-// ── Helpers ───────────────────────────────────────────────────
-function getSectionType(name, entries = []) {
-  const map = {
-    education: 'education', experience: 'experience', projects: 'project',
-    publications: 'publication', skills: 'skill', selected_honors: 'honor',
-    summary: 'summary',
+/**
+ * Detects the entry type for a given section so the right form fields are shown.
+ * Checks section name first (fast path), then inspects the first entry's fields.
+ */
+function detectSectionEntryType(sectionName, entries = []) {
+  const knownTypes = {
+    education:       'education',
+    experience:      'experience',
+    projects:        'project',
+    publications:    'publication',
+    skills:          'skill',
+    selected_honors: 'honor',
+    summary:         'summary',
   }
-  if (map[name]) return map[name]
-  const first = entries[0]
-  if (!first) return 'honor'
-  if (typeof first === 'string') return 'summary'
-  if (first.institution) return 'education'
-  if (first.company) return 'experience'
-  if (first.title && first.authors) return 'publication'
-  if (first.name) return 'project'
-  if (first.label) return 'skill'
-  if ('summary' in first && !('bullet' in first)) return 'summary'
+  if (knownTypes[sectionName]) return knownTypes[sectionName]
+
+  const firstEntry = entries[0]
+  if (!firstEntry) return 'honor'
+  if (typeof firstEntry === 'string') return 'summary'
+  if (firstEntry.institution) return 'education'
+  if (firstEntry.company) return 'experience'
+  if (firstEntry.title && firstEntry.authors) return 'publication'
+  if (firstEntry.name) return 'project'
+  if (firstEntry.label) return 'skill'
+  if ('summary' in firstEntry && !('bullet' in firstEntry)) return 'summary'
   return 'honor'
 }
 
-function newEntry(type) {
+/** Returns a blank entry object for the given type, used when the user adds a new row. */
+function createBlankEntry(type) {
   switch (type) {
     case 'education':   return { institution: '', area: '', degree: 'BS', start_date: '', end_date: '', location: '', highlights: [] }
     case 'experience':  return { company: '', position: '', start_date: '', end_date: 'present', location: '', highlights: [] }
@@ -38,12 +46,14 @@ function newEntry(type) {
   }
 }
 
-function toYaml(data) {
-  return yaml.dump({ cv: data }, { lineWidth: 120, noRefs: true })
+/** Serializes the CV data object to a YAML string. */
+function serializeCvToYaml(cvData) {
+  return yaml.dump({ cv: cvData }, { lineWidth: 120, noRefs: true })
 }
 
-// ── Reusable fields ───────────────────────────────────────────
-function Field({ label, value, onChange, placeholder, monospace }) {
+// ── Reusable form primitives ──────────────────────────────────────────────────
+
+function TextField({ label, value, onChange, placeholder, monospace }) {
   return (
     <div className="ff-field">
       <label className="ff-label">{label}</label>
@@ -57,7 +67,7 @@ function Field({ label, value, onChange, placeholder, monospace }) {
   )
 }
 
-function TA({ label, value, onChange, placeholder }) {
+function TextAreaField({ label, value, onChange, placeholder }) {
   return (
     <div className="ff-field">
       <label className="ff-label">{label}</label>
@@ -72,7 +82,7 @@ function TA({ label, value, onChange, placeholder }) {
   )
 }
 
-function DateRange({ startDate, endDate, onStartChange, onEndChange }) {
+function DateRangeField({ startDate, endDate, onStartChange, onEndChange }) {
   const isPresent = endDate === 'present'
   return (
     <div className="ff-daterange">
@@ -109,16 +119,19 @@ function DateRange({ startDate, endDate, onStartChange, onEndChange }) {
   )
 }
 
-function StringList({ label, items = [], onChange, placeholder }) {
+/** An editable list of plain strings (used for highlights, authors, etc.). */
+function StringListField({ label, items = [], onChange, placeholder }) {
   const list = Array.isArray(items) ? items : []
-  const update = (i, v) => { const n = [...list]; n[i] = v; onChange(n) }
-  const add    = ()    => onChange([...list, ''])
-  const remove = (i)   => onChange(list.filter((_, j) => j !== i))
+
+  const updateItem  = (index, value) => { const next = [...list]; next[index] = value; onChange(next) }
+  const addItem     = ()             => onChange([...list, ''])
+  const removeItem  = (index)        => onChange(list.filter((_, i) => i !== index))
+
   return (
     <div className="ff-field">
       <div className="ff-list-header">
         <label className="ff-label">{label}</label>
-        <button className="ff-add-sm" onClick={add}>+ Add</button>
+        <button className="ff-add-sm" onClick={addItem}>+ Add</button>
       </div>
       <div className="ff-list-items">
         {list.map((item, i) => (
@@ -126,10 +139,10 @@ function StringList({ label, items = [], onChange, placeholder }) {
             <input
               className="ff-input"
               value={typeof item === 'string' ? item : ''}
-              onChange={e => update(i, e.target.value)}
+              onChange={e => updateItem(i, e.target.value)}
               placeholder={placeholder}
             />
-            <button className="ff-del-btn" onClick={() => remove(i)} title="Remove">×</button>
+            <button className="ff-del-btn" onClick={() => removeItem(i)} title="Remove">×</button>
           </div>
         ))}
       </div>
@@ -137,131 +150,136 @@ function StringList({ label, items = [], onChange, placeholder }) {
   )
 }
 
-// ── Entry components ──────────────────────────────────────────
-function EducationEntry({ entry, onChange }) {
-  const u = f => v => onChange({ ...entry, [f]: v })
+// ── Entry form components (one per CV entry type) ─────────────────────────────
+
+function EducationEntryForm({ entry, onChange }) {
+  // Helper: returns a function that updates a single field on the entry object
+  const updateField = field => value => onChange({ ...entry, [field]: value })
   return (
     <div className="ff-entry-fields">
-      <Field label="Institution" value={entry.institution} onChange={u('institution')} placeholder="University Name" />
+      <TextField label="Institution"    value={entry.institution} onChange={updateField('institution')} placeholder="University Name" />
       <div className="ff-row2">
-        <Field label="Field of Study" value={entry.area} onChange={u('area')} placeholder="Computer Science" />
-        <Field label="Degree" value={entry.degree} onChange={u('degree')} placeholder="BS / MS / PhD" />
+        <TextField label="Field of Study" value={entry.area}   onChange={updateField('area')}   placeholder="Computer Science" />
+        <TextField label="Degree"         value={entry.degree} onChange={updateField('degree')} placeholder="BS / MS / PhD" />
       </div>
-      <DateRange
+      <DateRangeField
         startDate={entry.start_date} endDate={entry.end_date}
-        onStartChange={u('start_date')} onEndChange={u('end_date')}
+        onStartChange={updateField('start_date')} onEndChange={updateField('end_date')}
       />
-      <Field label="Location" value={entry.location} onChange={u('location')} placeholder="City, Country" />
-      <StringList label="Highlights" items={entry.highlights} onChange={u('highlights')} placeholder="Achievement, award, GPA…" />
+      <TextField label="Location" value={entry.location} onChange={updateField('location')} placeholder="City, Country" />
+      <StringListField label="Highlights" items={entry.highlights} onChange={updateField('highlights')} placeholder="Achievement, award, GPA…" />
     </div>
   )
 }
 
-function ExperienceEntry({ entry, onChange }) {
-  const u = f => v => onChange({ ...entry, [f]: v })
+function ExperienceEntryForm({ entry, onChange }) {
+  const updateField = field => value => onChange({ ...entry, [field]: value })
   return (
     <div className="ff-entry-fields">
       <div className="ff-row2">
-        <Field label="Company" value={entry.company} onChange={u('company')} placeholder="Company Name" />
-        <Field label="Position" value={entry.position} onChange={u('position')} placeholder="Job Title" />
+        <TextField label="Company"  value={entry.company}  onChange={updateField('company')}  placeholder="Company Name" />
+        <TextField label="Position" value={entry.position} onChange={updateField('position')} placeholder="Job Title" />
       </div>
-      <DateRange
+      <DateRangeField
         startDate={entry.start_date} endDate={entry.end_date}
-        onStartChange={u('start_date')} onEndChange={u('end_date')}
+        onStartChange={updateField('start_date')} onEndChange={updateField('end_date')}
       />
-      <Field label="Location" value={entry.location} onChange={u('location')} placeholder="City, Country (Remote)" />
-      <TA label="Summary" value={entry.summary} onChange={u('summary')} placeholder="Brief description of role…" />
-      <StringList label="Highlights" items={entry.highlights} onChange={u('highlights')} placeholder="Key achievement or responsibility…" />
+      <TextField      label="Location" value={entry.location} onChange={updateField('location')} placeholder="City, Country (Remote)" />
+      <TextAreaField  label="Summary"  value={entry.summary}  onChange={updateField('summary')}  placeholder="Brief description of role…" />
+      <StringListField label="Highlights" items={entry.highlights} onChange={updateField('highlights')} placeholder="Key achievement or responsibility…" />
     </div>
   )
 }
 
-function ProjectEntry({ entry, onChange }) {
-  const u = f => v => onChange({ ...entry, [f]: v })
+function ProjectEntryForm({ entry, onChange }) {
+  const updateField = field => value => onChange({ ...entry, [field]: value })
   return (
     <div className="ff-entry-fields">
-      <Field
+      <TextField
         label="Name (markdown supported)"
         value={entry.name}
-        onChange={u('name')}
+        onChange={updateField('name')}
         placeholder="[Project Name](https://github.com/…)"
       />
+      {/* Use a single date field when the entry only has a point-in-time date */}
       {entry.date && !entry.start_date ? (
-        <Field label="Date" value={entry.date} onChange={u('date')} placeholder="2023" monospace />
+        <TextField label="Date" value={entry.date} onChange={updateField('date')} placeholder="2023" monospace />
       ) : (
-        <DateRange
+        <DateRangeField
           startDate={entry.start_date} endDate={entry.end_date}
-          onStartChange={u('start_date')} onEndChange={u('end_date')}
+          onStartChange={updateField('start_date')} onEndChange={updateField('end_date')}
         />
       )}
-      <TA label="Summary" value={entry.summary} onChange={u('summary')} placeholder="Brief project description…" />
-      <StringList label="Highlights" items={entry.highlights} onChange={u('highlights')} placeholder="Key feature or achievement…" />
+      <TextAreaField   label="Summary"    value={entry.summary}     onChange={updateField('summary')}     placeholder="Brief project description…" />
+      <StringListField label="Highlights" items={entry.highlights}  onChange={updateField('highlights')}  placeholder="Key feature or achievement…" />
     </div>
   )
 }
 
-function PublicationEntry({ entry, onChange }) {
-  const u = f => v => onChange({ ...entry, [f]: v })
+function PublicationEntryForm({ entry, onChange }) {
+  const updateField = field => value => onChange({ ...entry, [field]: value })
   return (
     <div className="ff-entry-fields">
-      <Field label="Title" value={entry.title} onChange={u('title')} placeholder="Paper or article title" />
-      <StringList
+      <TextField label="Title" value={entry.title} onChange={updateField('title')} placeholder="Paper or article title" />
+      <StringListField
         label="Authors"
         items={entry.authors}
-        onChange={u('authors')}
+        onChange={updateField('authors')}
         placeholder="*Your Name* or Co-author Name"
       />
       <div className="ff-row2">
-        <Field label="Journal / Conference" value={entry.journal} onChange={u('journal')} placeholder="ICML 2024" />
-        <Field label="Date" value={entry.date} onChange={u('date')} placeholder="YYYY-MM" monospace />
+        <TextField label="Journal / Conference" value={entry.journal} onChange={updateField('journal')} placeholder="ICML 2024" />
+        <TextField label="Date"                 value={entry.date}    onChange={updateField('date')}    placeholder="YYYY-MM" monospace />
       </div>
       <div className="ff-row2">
-        <Field label="DOI" value={entry.doi} onChange={u('doi')} placeholder="10.xxxx/…" monospace />
-        <Field label="URL" value={entry.url} onChange={u('url')} placeholder="https://…" />
+        <TextField label="DOI" value={entry.doi} onChange={updateField('doi')} placeholder="10.xxxx/…" monospace />
+        <TextField label="URL" value={entry.url} onChange={updateField('url')} placeholder="https://…" />
       </div>
     </div>
   )
 }
 
-function SkillEntry({ entry, onChange }) {
-  const u = f => v => onChange({ ...entry, [f]: v })
+function SkillEntryForm({ entry, onChange }) {
+  const updateField = field => value => onChange({ ...entry, [field]: value })
   return (
     <div className="ff-entry-fields">
       <div className="ff-row2">
-        <Field label="Label" value={entry.label} onChange={u('label')} placeholder="Languages" />
-        <Field label="Details" value={entry.details} onChange={u('details')} placeholder="Python, TypeScript, Go" />
+        <TextField label="Label"   value={entry.label}   onChange={updateField('label')}   placeholder="Languages" />
+        <TextField label="Details" value={entry.details} onChange={updateField('details')} placeholder="Python, TypeScript, Go" />
       </div>
     </div>
   )
 }
 
-function HonorEntry({ entry, onChange }) {
+function HonorEntryForm({ entry, onChange }) {
   return (
     <div className="ff-entry-fields">
-      <Field
+      <TextField
         label="Honor / Bullet"
         value={entry.bullet}
-        onChange={v => onChange({ ...entry, bullet: v })}
+        onChange={value => onChange({ ...entry, bullet: value })}
         placeholder="Award name — Institution (Year)"
       />
     </div>
   )
 }
 
-function SummaryEntry({ entry, onChange }) {
-  const isString = typeof entry === 'string'
-  const value = isString ? entry : (entry.summary ?? entry.bullet ?? '')
-  function handleChange(v) {
-    if (isString) { onChange(v); return }
-    const next = { ...entry, summary: v }
-    delete next.bullet
-    onChange(next)
+function SummaryEntryForm({ entry, onChange }) {
+  const isPlainString = typeof entry === 'string'
+  const currentValue  = isPlainString ? entry : (entry.summary ?? entry.bullet ?? '')
+
+  function handleChange(newValue) {
+    if (isPlainString) { onChange(newValue); return }
+    const updated = { ...entry, summary: newValue }
+    delete updated.bullet
+    onChange(updated)
   }
+
   return (
     <div className="ff-entry-fields">
-      <TA
+      <TextAreaField
         label="Summary"
-        value={value}
+        value={currentValue}
         onChange={handleChange}
         placeholder="Write a summary or description…"
       />
@@ -269,14 +287,15 @@ function SummaryEntry({ entry, onChange }) {
   )
 }
 
-const ENTRY_COMPONENTS = {
-  education: EducationEntry,
-  experience: ExperienceEntry,
-  project: ProjectEntry,
-  publication: PublicationEntry,
-  skill: SkillEntry,
-  honor: HonorEntry,
-  summary: SummaryEntry,
+// Maps entry type string → the matching form component
+const ENTRY_FORM_BY_TYPE = {
+  education:   EducationEntryForm,
+  experience:  ExperienceEntryForm,
+  project:     ProjectEntryForm,
+  publication: PublicationEntryForm,
+  skill:       SkillEntryForm,
+  honor:       HonorEntryForm,
+  summary:     SummaryEntryForm,
 }
 
 const SECTION_TYPE_OPTIONS = [
@@ -289,80 +308,105 @@ const SECTION_TYPE_OPTIONS = [
   { value: 'honor',       label: 'Bullets / Honors' },
 ]
 
-// ── Section Panel ─────────────────────────────────────────────
+// ── Section Panel ─────────────────────────────────────────────────────────────
+
 function SectionPanel({ name, entries = [], onChange, onDelete, onRename, onMoveUp, onMoveDown }) {
-  const [open, setOpen] = useState(false)
-  const [renaming, setRenaming] = useState(false)
-  const [renameVal, setRenameVal] = useState(name)
-  const type = getSectionType(name, entries)
-  const EntryComp = ENTRY_COMPONENTS[type] || HonorEntry
-  const displayName = toDisplayName(name)
-  const singular = displayName.replace(/s$/i, '')
-  const renameRef = useRef(null)
+  const [isOpen, setIsOpen]         = useState(false)
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState(name)
+  const renameInputRef = useRef(null)
 
-  function updateEntry(i, val) { const n = [...entries]; n[i] = val; onChange(n) }
-  function addEntry()          { onChange([...entries, newEntry(type)]) }
-  function removeEntry(i)      { onChange(entries.filter((_, j) => j !== i)) }
-  function moveUp(i)   { if (i === 0) return; const n = [...entries]; [n[i-1], n[i]] = [n[i], n[i-1]]; onChange(n) }
-  function moveDown(i) { if (i === entries.length - 1) return; const n = [...entries]; [n[i], n[i+1]] = [n[i+1], n[i]]; onChange(n) }
+  const entryType     = detectSectionEntryType(name, entries)
+  const EntryFormComp = ENTRY_FORM_BY_TYPE[entryType] || HonorEntryForm
+  const displayTitle  = formatSectionTitle(name)
+  // Used in the "+ Add X" button (strips trailing "s" from "Education" → "Educatio" is avoided by using the key)
+  const singularTitle = displayTitle.replace(/s$/i, '')
 
-  function startRename(e) {
+  function updateEntryAt(index, newValue) {
+    const updated = [...entries]
+    updated[index] = newValue
+    onChange(updated)
+  }
+
+  function addNewEntry()  { onChange([...entries, createBlankEntry(entryType)]) }
+  function removeEntryAt(index) { onChange(entries.filter((_, i) => i !== index)) }
+
+  function moveEntryUp(index) {
+    if (index === 0) return
+    const updated = [...entries]
+    ;[updated[index - 1], updated[index]] = [updated[index], updated[index - 1]]
+    onChange(updated)
+  }
+
+  function moveEntryDown(index) {
+    if (index === entries.length - 1) return
+    const updated = [...entries]
+    ;[updated[index], updated[index + 1]] = [updated[index + 1], updated[index]]
+    onChange(updated)
+  }
+
+  function startRenaming(e) {
     e.stopPropagation()
-    setRenameVal(name)
-    setRenaming(true)
-    setTimeout(() => renameRef.current?.select(), 0)
+    setRenameValue(name)
+    setIsRenaming(true)
+    // Focus the input after React renders it
+    setTimeout(() => renameInputRef.current?.select(), 0)
   }
 
   function commitRename() {
-    const key = renameVal.trim().replace(/\s+/g, '_').toLowerCase()
-    if (key && key !== name) onRename(key)
-    setRenaming(false)
+    const newKey = renameValue.trim().replace(/\s+/g, '_').toLowerCase()
+    if (newKey && newKey !== name) onRename(newKey)
+    setIsRenaming(false)
   }
 
   return (
     <div className="ff-section">
       <div className="ff-section-header-row">
-        <button className="ff-section-header" onClick={() => !renaming && setOpen(o => !o)}>
-          <span className="ff-chevron">{open ? '▾' : '▸'}</span>
-          {renaming ? (
+        <button className="ff-section-header" onClick={() => !isRenaming && setIsOpen(open => !open)}>
+          <span className="ff-chevron">{isOpen ? '▾' : '▸'}</span>
+          {isRenaming ? (
             <input
-              ref={renameRef}
+              ref={renameInputRef}
               className="ff-rename-input"
-              value={renameVal}
-              onChange={e => setRenameVal(e.target.value)}
+              value={renameValue}
+              onChange={e => setRenameValue(e.target.value)}
               onBlur={commitRename}
-              onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenaming(false) }}
+              onKeyDown={e => {
+                if (e.key === 'Enter')  commitRename()
+                if (e.key === 'Escape') setIsRenaming(false)
+              }}
               onClick={e => e.stopPropagation()}
             />
           ) : (
-            <span className="ff-section-name">{displayName}</span>
+            <span className="ff-section-name">{displayTitle}</span>
           )}
           <span className="ff-badge">{entries.length}</span>
         </button>
         <div className="ff-section-meta-actions">
           <button className="ff-act" onClick={e => { e.stopPropagation(); onMoveUp() }}   disabled={!onMoveUp}   title="Move up">↑</button>
           <button className="ff-act" onClick={e => { e.stopPropagation(); onMoveDown() }} disabled={!onMoveDown} title="Move down">↓</button>
-          <button className="ff-act" onClick={startRename} title="Rename section">✎</button>
+          <button className="ff-act" onClick={startRenaming} title="Rename section">✎</button>
           <button className="ff-act ff-act-del" onClick={onDelete} title="Delete section">×</button>
         </div>
       </div>
-      {open && (
+
+      {isOpen && (
         <div className="ff-section-body">
           {entries.map((entry, i) => (
             <div key={i} className="ff-entry-card">
               <div className="ff-entry-toolbar">
                 <span className="ff-entry-idx">#{i + 1}</span>
                 <div className="ff-entry-actions">
-                  <button className="ff-act" onClick={() => moveUp(i)}   disabled={i === 0}                  title="Move up">↑</button>
-                  <button className="ff-act" onClick={() => moveDown(i)} disabled={i === entries.length - 1} title="Move down">↓</button>
-                  <button className="ff-act ff-act-del" onClick={() => removeEntry(i)} title="Remove">×</button>
+                  <button className="ff-act" onClick={() => moveEntryUp(i)}   disabled={i === 0}                  title="Move up">↑</button>
+                  <button className="ff-act" onClick={() => moveEntryDown(i)} disabled={i === entries.length - 1} title="Move down">↓</button>
+                  <button className="ff-act ff-act-del" onClick={() => removeEntryAt(i)} title="Remove">×</button>
                 </div>
               </div>
-              <EntryComp entry={entry} onChange={val => updateEntry(i, val)} />
+              <EntryFormComp entry={entry} onChange={val => updateEntryAt(i, val)} />
             </div>
           ))}
-          <button className="ff-add-entry" onClick={addEntry}>
-            + Add {singular}
+          <button className="ff-add-entry" onClick={addNewEntry}>
+            + Add {singularTitle}
           </button>
         </div>
       )}
@@ -370,15 +414,16 @@ function SectionPanel({ name, entries = [], onChange, onDelete, onRename, onMove
   )
 }
 
-// ── Add Section Modal ─────────────────────────────────────────
+// ── Add Section Modal ─────────────────────────────────────────────────────────
+
 function AddSectionModal({ onAdd, onClose }) {
   const [sectionName, setSectionName] = useState('')
-  const [entryType, setEntryType] = useState('summary')
-  const inputRef = useRef(null)
+  const [entryType, setEntryType]     = useState('summary')
+  const nameInputRef = useRef(null)
 
-  useEffect(() => { inputRef.current?.focus() }, [])
+  useEffect(() => { nameInputRef.current?.focus() }, [])
 
-  function handleAdd() {
+  function handleConfirm() {
     const key = sectionName.trim().replace(/\s+/g, '_').toLowerCase()
     if (!key) return
     onAdd(key, entryType)
@@ -395,34 +440,37 @@ function AddSectionModal({ onAdd, onClose }) {
           <div className="ff-field">
             <label className="ff-label">Section Name</label>
             <input
-              ref={inputRef}
+              ref={nameInputRef}
               className="ff-input"
               value={sectionName}
               onChange={e => setSectionName(e.target.value)}
               placeholder="e.g. Awards, Certifications, Volunteering"
-              onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') onClose() }}
+              onKeyDown={e => {
+                if (e.key === 'Enter')  handleConfirm()
+                if (e.key === 'Escape') onClose()
+              }}
             />
           </div>
           <div className="ff-field">
             <label className="ff-label">Entry Type</label>
             <div className="ff-type-grid">
-              {SECTION_TYPE_OPTIONS.map(opt => (
+              {SECTION_TYPE_OPTIONS.map(option => (
                 <button
-                  key={opt.value}
-                  className={`ff-type-btn${entryType === opt.value ? ' active' : ''}`}
-                  onClick={() => setEntryType(opt.value)}
+                  key={option.value}
+                  className={`ff-type-btn${entryType === option.value ? ' active' : ''}`}
+                  onClick={() => setEntryType(option.value)}
                 >
-                  {opt.label}
+                  {option.label}
                 </button>
               ))}
             </div>
           </div>
         </div>
         <div className="ff-modal-footer">
-          <button className="ff-modal-cancel" onClick={onClose}>Cancel</button>
+          <button className="ff-modal-cancel"  onClick={onClose}>Cancel</button>
           <button
             className="ff-modal-confirm"
-            onClick={handleAdd}
+            onClick={handleConfirm}
             disabled={!sectionName.trim()}
           >
             Add Section
@@ -433,122 +481,132 @@ function AddSectionModal({ onAdd, onClose }) {
   )
 }
 
-// ── Main FormEditor ───────────────────────────────────────────
+// ── Main FormEditor component ─────────────────────────────────────────────────
+
 export default function FormEditor({ cvData, onYamlChange }) {
-  const [data, setData] = useState(cvData || {})
+  const [formData, setFormData]         = useState(cvData || {})
   const [showAddSection, setShowAddSection] = useState(false)
-  const skipSync = useRef(false)
+
+  // skipSync prevents the external cvData prop from overwriting local changes
+  // that were just triggered by this component itself (avoid loop: form → yaml → form)
+  const skipNextSyncRef = useRef(false)
 
   useEffect(() => {
-    if (skipSync.current) { skipSync.current = false; return }
-    if (cvData) setData(cvData)
+    if (skipNextSyncRef.current) { skipNextSyncRef.current = false; return }
+    if (cvData) setFormData(cvData)
   }, [cvData])
 
-  function update(newData) {
-    setData(newData)
-    skipSync.current = true
-    try { onYamlChange(toYaml(newData)) } catch {}
+  /** Applies a change to the CV data, regenerates YAML, and notifies the parent. */
+  function applyUpdate(newData) {
+    setFormData(newData)
+    skipNextSyncRef.current = true
+    try { onYamlChange(serializeCvToYaml(newData)) } catch { /* ignore serialization errors */ }
   }
 
-  const set = (field, value) => update({ ...data, [field]: value })
+  const setTopLevelField = (field, value) => applyUpdate({ ...formData, [field]: value })
 
-  const setSection = (name, entries) =>
-    update({ ...data, sections: { ...(data.sections || {}), [name]: entries } })
+  const setSectionEntries = (sectionName, entries) =>
+    applyUpdate({ ...formData, sections: { ...(formData.sections || {}), [sectionName]: entries } })
 
-  function deleteSection(name) {
-    const next = { ...(data.sections || {}) }
-    delete next[name]
-    update({ ...data, sections: next })
+  function deleteSection(sectionName) {
+    const updatedSections = { ...(formData.sections || {}) }
+    delete updatedSections[sectionName]
+    applyUpdate({ ...formData, sections: updatedSections })
   }
 
   function renameSection(oldName, newName) {
-    const old = data.sections || {}
-    const entries = Object.entries(old)
-    const next = Object.fromEntries(
-      entries.map(([k, v]) => [k === oldName ? newName : k, v])
-    )
-    update({ ...data, sections: next })
+    const sectionEntries = Object.entries(formData.sections || {})
+    const renamedEntries = sectionEntries.map(([key, value]) => [key === oldName ? newName : key, value])
+    applyUpdate({ ...formData, sections: Object.fromEntries(renamedEntries) })
   }
 
   function addSection(name, entryType) {
-    const next = { ...(data.sections || {}), [name]: [newEntry(entryType)] }
-    update({ ...data, sections: next })
+    const updatedSections = { ...(formData.sections || {}), [name]: [createBlankEntry(entryType)] }
+    applyUpdate({ ...formData, sections: updatedSections })
     setShowAddSection(false)
   }
 
-  function moveSection(name, dir) {
-    const entries = Object.entries(data.sections || {})
-    const i = entries.findIndex(([k]) => k === name)
-    const j = i + dir
-    if (j < 0 || j >= entries.length) return
-    ;[entries[i], entries[j]] = [entries[j], entries[i]]
-    update({ ...data, sections: Object.fromEntries(entries) })
+  function moveSectionByOffset(sectionName, offset) {
+    const sectionEntries = Object.entries(formData.sections || {})
+    const currentIndex   = sectionEntries.findIndex(([key]) => key === sectionName)
+    const targetIndex    = currentIndex + offset
+    if (targetIndex < 0 || targetIndex >= sectionEntries.length) return
+    ;[sectionEntries[currentIndex], sectionEntries[targetIndex]] = [sectionEntries[targetIndex], sectionEntries[currentIndex]]
+    applyUpdate({ ...formData, sections: Object.fromEntries(sectionEntries) })
   }
 
-  const sections = data.sections || {}
+  const sections = formData.sections || {}
 
   return (
     <div className="ff-root">
 
-      {/* ── Personal Info ── */}
+      {/* ── Personal Info ────────────────────────────────────────────────── */}
       <div className="ff-group">
         <div className="ff-group-title">Personal Info</div>
-        <Field label="Full Name"  value={data.name}     onChange={v => set('name', v)}     placeholder="Your Name" />
-        <Field label="Headline"   value={data.headline} onChange={v => set('headline', v)} placeholder="Software Engineer & Researcher" />
+        <TextField label="Full Name" value={formData.name}     onChange={v => setTopLevelField('name', v)}     placeholder="Your Name" />
+        <TextField label="Headline"  value={formData.headline} onChange={v => setTopLevelField('headline', v)} placeholder="Software Engineer & Researcher" />
         <div className="ff-row2">
-          <Field label="Location" value={data.location} onChange={v => set('location', v)} placeholder="City, Country" />
-          <Field label="Email"    value={data.email}    onChange={v => set('email', v)}    placeholder="you@email.com" />
+          <TextField label="Location" value={formData.location} onChange={v => setTopLevelField('location', v)} placeholder="City, Country" />
+          <TextField label="Email"    value={formData.email}    onChange={v => setTopLevelField('email', v)}    placeholder="you@email.com" />
         </div>
         <div className="ff-row2">
-          <Field label="Phone"   value={data.phone}   onChange={v => set('phone', v)}   placeholder="+1 555 000 0000" />
-          <Field label="Website" value={data.website} onChange={v => set('website', v)} placeholder="https://yoursite.com" />
+          <TextField label="Phone"   value={formData.phone}   onChange={v => setTopLevelField('phone', v)}   placeholder="+1 555 000 0000" />
+          <TextField label="Website" value={formData.website} onChange={v => setTopLevelField('website', v)} placeholder="https://yoursite.com" />
         </div>
       </div>
 
-      {/* ── Social Networks ── */}
+      {/* ── Social Networks ──────────────────────────────────────────────── */}
       <div className="ff-group">
         <div className="ff-group-title">Social Networks</div>
-        {(data.social_networks || []).map((sn, i) => (
+        {(formData.social_networks || []).map((network, i) => (
           <div key={i} className="ff-sn-row">
             <input
               className="ff-input ff-sn-network"
-              value={sn.network || ''}
+              value={network.network || ''}
               onChange={e => {
-                const n = [...(data.social_networks || [])]; n[i] = { ...sn, network: e.target.value }
-                set('social_networks', n)
+                const updated = [...(formData.social_networks || [])]
+                updated[i] = { ...network, network: e.target.value }
+                setTopLevelField('social_networks', updated)
               }}
               placeholder="LinkedIn"
             />
             <input
               className="ff-input"
-              value={sn.username || ''}
+              value={network.username || ''}
               onChange={e => {
-                const n = [...(data.social_networks || [])]; n[i] = { ...sn, username: e.target.value }
-                set('social_networks', n)
+                const updated = [...(formData.social_networks || [])]
+                updated[i] = { ...network, username: e.target.value }
+                setTopLevelField('social_networks', updated)
               }}
               placeholder="username"
             />
-            <button className="ff-del-btn" onClick={() => set('social_networks', (data.social_networks || []).filter((_, j) => j !== i))}>×</button>
+            <button
+              className="ff-del-btn"
+              onClick={() => setTopLevelField('social_networks', (formData.social_networks || []).filter((_, j) => j !== i))}
+            >×</button>
           </div>
         ))}
-        <button className="ff-add-entry" onClick={() => set('social_networks', [...(data.social_networks || []), { network: '', username: '' }])}>
+        <button
+          className="ff-add-entry"
+          onClick={() => setTopLevelField('social_networks', [...(formData.social_networks || []), { network: '', username: '' }])}
+        >
           + Add Network
         </button>
       </div>
 
-      {/* ── CV Sections ── */}
+      {/* ── CV Sections ──────────────────────────────────────────────────── */}
       <div className="ff-group">
         <div className="ff-group-title">Sections</div>
-        {Object.entries(sections).map(([name, entries], i, arr) => (
+        {Object.entries(sections).map(([name, entries], i, allSections) => (
           <SectionPanel
             key={name}
             name={name}
             entries={entries || []}
-            onChange={ents => setSection(name, ents)}
+            onChange={updatedEntries => setSectionEntries(name, updatedEntries)}
             onDelete={() => deleteSection(name)}
             onRename={newName => renameSection(name, newName)}
-            onMoveUp={i > 0 ? () => moveSection(name, -1) : null}
-            onMoveDown={i < arr.length - 1 ? () => moveSection(name, 1) : null}
+            onMoveUp={i > 0                       ? () => moveSectionByOffset(name, -1) : null}
+            onMoveDown={i < allSections.length - 1 ? () => moveSectionByOffset(name, 1)  : null}
           />
         ))}
         <button className="ff-add-section-btn" onClick={() => setShowAddSection(true)}>
@@ -559,7 +617,6 @@ export default function FormEditor({ cvData, onYamlChange }) {
       {showAddSection && (
         <AddSectionModal onAdd={addSection} onClose={() => setShowAddSection(false)} />
       )}
-
     </div>
   )
 }
