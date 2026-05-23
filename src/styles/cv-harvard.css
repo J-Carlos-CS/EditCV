@@ -37,7 +37,8 @@
   text-align: center;
 }
 
-[data-template="harvard"] .contactSep {
+[data-template="harvard"] .contactSep::before {
+  content: ' • ';
   color: #555;
 }
 

@@ -56,11 +56,13 @@ export async function exportToPDF(cvData, filename = 'cv.pdf', templateId = 'har
   const template = TEMPLATES[templateId] ?? TEMPLATES.harvard
 
   // CSS applied to every off-screen measurement/rendering container
+  const bgColor = template.backgroundColor ?? '#ffffff'
+
   const offScreenContainerStyle = [
     'position:fixed', 'top:0', 'left:-9999px', 'z-index:-1',
     `width:${PAGE_WIDTH_PX}px`,
     `padding:0 ${template.paddingH}px`,
-    'background:#fff',
+    `background:${bgColor}`,
     'box-sizing:border-box',
   ].join(';')
 
@@ -88,8 +90,17 @@ export async function exportToPDF(cvData, filename = 'cv.pdf', templateId = 'har
     </TemplateStaticProvider>
   )
 
-  const itemHeights = Array.from(measureContainer.firstChild.children)
-    .map(child => child.getBoundingClientRect().height)
+  // Use top-difference between consecutive children instead of individual heights.
+  // This correctly captures margin collapsing between adjacent sections — e.g.
+  // .entry margin-bottom:6pt + .section margin-top:8pt collapses to 8pt in the
+  // real render, but getBoundingClientRect().height would count each independently.
+  const children = Array.from(measureContainer.firstChild.children)
+  const rects = children.map(c => c.getBoundingClientRect())
+  const itemHeights = rects.map((rect, i) =>
+    i < rects.length - 1
+      ? rects[i + 1].top - rect.top   // distance to next item = real space used (collapsed margins included)
+      : rect.height                   // last item: own height (no following sibling to collapse with)
+  )
 
   measureRoot.unmount()
   document.body.removeChild(measureContainer)
@@ -125,7 +136,7 @@ export async function exportToPDF(cvData, filename = 'cv.pdf', templateId = 'har
       'position:fixed', 'top:0', 'left:-9999px', 'z-index:-1',
       `width:${PAGE_WIDTH_PX}px`, `height:${PAGE_HEIGHT_PX}px`,
       `padding:${template.paddingV}px ${template.paddingH}px`,
-      'background:#fff',
+      `background:${bgColor}`,
       'box-sizing:border-box', 'overflow:hidden',
     ].join(';')
     document.body.appendChild(pageContainer)
@@ -144,7 +155,7 @@ export async function exportToPDF(cvData, filename = 'cv.pdf', templateId = 'har
     const canvas = await html2canvas(pageContainer, {
       scale: CANVAS_SCALE,
       useCORS: true,
-      backgroundColor: '#ffffff',
+      backgroundColor: bgColor,
       width: PAGE_WIDTH_PX,
       height: PAGE_HEIGHT_PX,
       windowWidth: PAGE_WIDTH_PX,

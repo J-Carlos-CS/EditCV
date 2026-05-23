@@ -19,12 +19,20 @@ function usePagination(cvData, paddingV, template) {
       const children = Array.from(measureRef.current.children)
       if (!children.length) return
 
+      // Use top-difference so collapsed margins between adjacent sections are
+      // counted correctly (same logic as pdfExport.jsx)
+      const rects    = children.map(c => c.getBoundingClientRect())
+      const heights  = rects.map((r, i) =>
+        i < rects.length - 1 ? rects[i + 1].top - r.top : r.height
+      )
+
       const available = PAGE_HEIGHT - paddingV * 2
       const groups = []
       let page = [], height = 0
 
-      for (const child of children) {
-        const h = child.getBoundingClientRect().height
+      for (let ci = 0; ci < children.length; ci++) {
+        const child = children[ci]
+        const h = heights[ci]
         if (page.length > 0 && height + h > available) {
           groups.push(page)
           page = [Number(child.dataset.idx)]

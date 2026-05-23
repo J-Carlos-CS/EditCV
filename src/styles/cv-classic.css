@@ -34,9 +34,10 @@
   line-height: 1.6;
 }
 
-[data-template="classic"] .contactSep {
+[data-template="classic"] .contactSep::before {
+  content: ' • ';
   color: #1a56db;
-  margin: 0 3pt;
+  margin: 0 1pt;
 }
 
 [data-template="classic"] .cvContact a {

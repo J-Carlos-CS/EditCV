@@ -6,6 +6,7 @@ export const TEMPLATES = {
     paddingH: 58,
     paddingV: 32,
     dateFormat: 'month-year', // "Oct 2022"
+    backgroundColor: '#ffffff',
   },
   classic: {
     id: 'classic',
@@ -14,6 +15,16 @@ export const TEMPLATES = {
     paddingH: 58,
     paddingV: 32,
     dateFormat: 'year', // "2022"
+    backgroundColor: '#ffffff',
+  },
+  modern: {
+    id: 'modern',
+    label: 'Modern',
+    fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
+    paddingH: 44,
+    paddingV: 28,
+    dateFormat: 'month-year', // "Oct 2022"
+    backgroundColor: '#ffffff',
   },
 }
 
