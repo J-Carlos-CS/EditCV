@@ -77,16 +77,13 @@ export default function CVPreview({ cvData, zoom = 100 }) {
     position: 'fixed', top: 0, left: '-9999px', visibility: 'hidden',
     width: '816px',
     padding: `${tpl.paddingV}px ${tpl.paddingH}px 0`,
-    fontFamily: tpl.fontFamily,
-    fontSize: '10pt',
-    lineHeight: '1.35',
     pointerEvents: 'none',
     boxSizing: 'border-box',
   }
 
   return (
     <div className="previewWrapper">
-      <div ref={measureRef} aria-hidden="true" style={measureStyle}>
+      <div ref={measureRef} aria-hidden="true" data-template={template} style={measureStyle}>
         {items.map((item, idx) => (
           <div key={idx} data-idx={idx}>
             {item.type === 'header'

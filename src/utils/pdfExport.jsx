@@ -5,6 +5,7 @@ import { flushSync } from 'react-dom'
 import CVHeader from '../components/CVPreview/sections/CVHeader'
 import CVSection from '../components/CVPreview/CVSection'
 import { TEMPLATES } from '../templates/index'
+import { TemplateStaticProvider } from '../context/TemplateContext'
 
 const PAGE_W_PX = 816
 const PAGE_H_PX = 1056
@@ -48,11 +49,13 @@ export async function exportToPDF(cvData, filename = 'cv.pdf', templateId = 'har
   document.body.appendChild(measureDiv)
 
   const measureRoot = await mountAndWait(measureDiv,
-    <div>
-      {items.map((item, i) => (
-        <div key={i} data-idx={i}>{renderItem(item, cvData)}</div>
-      ))}
-    </div>
+    <TemplateStaticProvider templateId={templateId}>
+      <div>
+        {items.map((item, i) => (
+          <div key={i} data-idx={i}>{renderItem(item, cvData)}</div>
+        ))}
+      </div>
+    </TemplateStaticProvider>
   )
 
   const heights = Array.from(measureDiv.firstChild.children)
@@ -95,7 +98,9 @@ export async function exportToPDF(cvData, filename = 'cv.pdf', templateId = 'har
     document.body.appendChild(pageDiv)
 
     const pageRoot = await mountAndWait(pageDiv,
-      <>{pages[pi].map(idx => <div key={idx}>{renderItem(items[idx], cvData)}</div>)}</>
+      <TemplateStaticProvider templateId={templateId}>
+        <>{pages[pi].map(idx => <div key={idx}>{renderItem(items[idx], cvData)}</div>)}</>
+      </TemplateStaticProvider>
     )
 
     const canvas = await html2canvas(pageDiv, {
