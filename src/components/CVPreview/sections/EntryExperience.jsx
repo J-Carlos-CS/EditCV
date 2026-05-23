@@ -1,4 +1,6 @@
 import { formatDateRange } from '../../../utils/yamlParser'
+import { useTemplate } from '../../../context/TemplateContext'
+import { TEMPLATES } from '../../../templates/index'
 import MD from '../MD'
 
 function renderHighlight(h, i) {
@@ -20,13 +22,16 @@ function renderHighlight(h, i) {
 }
 
 export default function EntryExperience({ entry }) {
-  const date = formatDateRange(entry.start_date, entry.end_date, entry.date)
+  const { template } = useTemplate()
+  const { dateFormat } = TEMPLATES[template]
+  const date = formatDateRange(entry.start_date, entry.end_date, entry.date, dateFormat)
   return (
     <div className="entry">
       <div className="entryHeader">
         <div className="entryLeft">
           <span className="entryTitle">{entry.company}</span>
           {entry.position && <span className="entrySubtitle">{entry.position}</span>}
+          {entry.location && <span className="entryLocationInline">{entry.location}</span>}
           {entry.summary && <MD text={entry.summary} className="entrySummary" tag="p" />}
         </div>
         <div className="entryRight">

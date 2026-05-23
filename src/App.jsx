@@ -17,8 +17,21 @@ function AppInner() {
   const [parsedCV, setParsedCV] = useState(null)
   const [parseError, setParseError] = useState(null)
   const [exporting, setExporting] = useState(false)
-  const [zoom, setZoom] = useState(150)
+  const [zoom, setZoom] = useState(100)
   const saveTimerRef = useRef(null)
+  const previewPaneRef = useRef(null)
+
+  useEffect(() => {
+    const el = previewPaneRef.current
+    if (!el) return
+    const observer = new ResizeObserver(() => {
+      const available = el.clientWidth - 48 // 24px padding each side
+      const fitted = Math.round((available / 816) * 100)
+      setZoom(Math.max(25, Math.min(200, fitted)))
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
   const { template, setTemplate } = useTemplate()
 
   useEffect(() => {
@@ -94,7 +107,7 @@ function AppInner() {
           <div className="editorPane">
             <Editor value={yamlText} onChange={setYamlText} error={parseError} parsedCV={parsedCV} />
           </div>
-          <div className="previewPane">
+          <div className="previewPane" ref={previewPaneRef}>
             <div className="previewToolbar">
               <span className="previewLabel">Preview — US Letter</span>
               <div className="zoomControls">

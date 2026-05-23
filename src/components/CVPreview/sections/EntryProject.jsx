@@ -1,8 +1,12 @@
 import { formatDateRange } from '../../../utils/yamlParser'
+import { useTemplate } from '../../../context/TemplateContext'
+import { TEMPLATES } from '../../../templates/index'
 import MD from '../MD'
 
 export default function EntryProject({ entry }) {
-  const date = formatDateRange(entry.start_date, entry.end_date, entry.date)
+  const { template } = useTemplate()
+  const { dateFormat } = TEMPLATES[template]
+  const date = formatDateRange(entry.start_date, entry.end_date, entry.date, dateFormat)
   return (
     <div className="entry">
       <div className="entryHeader">

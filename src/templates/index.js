@@ -5,6 +5,7 @@ export const TEMPLATES = {
     fontFamily: "'Times New Roman', Times, serif",
     paddingH: 58,
     paddingV: 32,
+    dateFormat: 'month-year', // "Oct 2022"
   },
   classic: {
     id: 'classic',
@@ -12,6 +13,7 @@ export const TEMPLATES = {
     fontFamily: "'Charter', 'Georgia', 'Times New Roman', serif",
     paddingH: 50,
     paddingV: 36,
+    dateFormat: 'year', // "2022"
   },
 }
 

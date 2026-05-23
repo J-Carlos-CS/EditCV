@@ -26,13 +26,27 @@ export function detectEntryType(entry) {
   return 'text'
 }
 
-export function formatDateRange(startDate, endDate, date) {
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
+function parseMonthYear(str) {
+  const parts = String(str).split('-')
+  if (parts.length >= 2) {
+    const month = MONTHS[parseInt(parts[1], 10) - 1]
+    return month ? `${month} ${parts[0]}` : parts[0]
+  }
+  return String(str)
+}
+
+function parseYear(str) {
+  return String(str).split('-')[0]
+}
+
+export function formatDateRange(startDate, endDate, date, dateFormat = 'month-year') {
   if (date) return String(date)
-  const start = startDate ? String(startDate).replace(/-\d{2}$/, '').replace('-', '/') : ''
+  const parse = dateFormat === 'year' ? parseYear : parseMonthYear
+  const start = startDate ? parse(startDate) : ''
   const end = endDate
-    ? endDate === 'present'
-      ? 'Present'
-      : String(endDate).replace(/-\d{2}$/, '').replace('-', '/')
+    ? endDate === 'present' ? 'Present' : parse(endDate)
     : ''
   if (start && end) return `${start} – ${end}`
   if (start) return start

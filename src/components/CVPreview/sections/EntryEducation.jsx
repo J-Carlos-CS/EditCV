@@ -1,8 +1,12 @@
 import { formatDateRange } from '../../../utils/yamlParser'
+import { useTemplate } from '../../../context/TemplateContext'
+import { TEMPLATES } from '../../../templates/index'
 import MD from '../MD'
 
 export default function EntryEducation({ entry }) {
-  const date = formatDateRange(entry.start_date, entry.end_date, entry.date)
+  const { template } = useTemplate()
+  const { dateFormat } = TEMPLATES[template]
+  const date = formatDateRange(entry.start_date, entry.end_date, entry.date, dateFormat)
   return (
     <div className="entry">
       <div className="entryHeader">
@@ -11,6 +15,7 @@ export default function EntryEducation({ entry }) {
             {entry.degree && <span className="entryDegree">{entry.degree}</span>}
             <span className="entryTitle">{entry.institution}</span>
             {entry.area && <span className="entryArea">{entry.area}</span>}
+            {entry.location && <span className="entryLocationInline">{entry.location}</span>}
           </div>
           {entry.summary && <MD text={entry.summary} className="entrySummary" tag="p" />}
         </div>
