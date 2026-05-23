@@ -11,8 +11,8 @@ export const TEMPLATES = {
     id: 'classic',
     label: 'Classic',
     fontFamily: "'Charter', 'Georgia', 'Times New Roman', serif",
-    paddingH: 50,
-    paddingV: 36,
+    paddingH: 58,
+    paddingV: 32,
     dateFormat: 'year', // "2022"
   },
 }
