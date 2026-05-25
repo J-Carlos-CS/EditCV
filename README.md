@@ -1,6 +1,6 @@
 # ✦ EditCV
 
-> **Build professional Harvard-style CVs using a form or plain YAML.**
+> **Build professional CVs using a form or plain YAML — Harvard, Classic, or Modern style.**
 > No accounts, no servers, no limits — everything runs in your browser.
 
 ![Status](https://img.shields.io/badge/status-in%20development-yellow?style=flat-square)
@@ -33,9 +33,15 @@
 
 ## What is EditCV?
 
-EditCV is a web app that generates a **Harvard-style CV** — the standard used at MIT, Harvard, Stanford, and most top universities — from a form or a YAML file. Fill in your information and the app handles layout, typography, and pagination in **US Letter (8.5" × 11")** format.
+EditCV is a web app that generates a professional CV from a form or a YAML file, with three available templates:
 
-The output is a PDF ready to send: no flashy colors, no photos, no columns — just well-organized content in Times New Roman.
+| Template | Style |
+|---|---|
+| **Harvard** | Times New Roman, centered section titles, horizontal rules — the standard at MIT, Harvard, and Stanford |
+| **Classic** | Clean serif layout, left-aligned titles |
+| **Modern** | Contemporary sans-serif design with subtle visual hierarchy |
+
+Fill in your information and the app handles layout, typography, and pagination in **US Letter (8.5" × 11")** format. The output is a PDF ready to send — no flashy colors, no photos, no columns.
 
 ---
 
@@ -47,7 +53,7 @@ The output is a PDF ready to send: no flashy colors, no photos, no columns — j
 | 📝 **YAML editor** | Full Monaco editor with syntax highlighting and error detection |
 | 🔀 **Mode toggle** | Switch between Form and YAML at any time — data stays in sync |
 | 👁 **Live preview** | CV updates instantly on every change |
-| 📄 **Harvard format** | Times New Roman, centered section titles with horizontal rules |
+| 🎨 **3 templates** | Harvard (Times New Roman), Classic, and Modern — switchable from the navbar |
 | ➕ **Custom sections** | Add any section with any name you want |
 | ↕ **Reorder sections** | Move sections up/down with ↑↓ buttons — order is reflected in the PDF |
 | ✎ **Rename sections** | Inline name editing directly in the section header |
@@ -449,7 +455,7 @@ exportToPDF(cvData)
 | Capture resolution | 3× (high resolution) |
 | Image format | JPEG, quality 0.92 |
 | Background | White (ignores the app's dark theme) |
-| Typeface | Times New Roman, 10pt |
+| Typeface | Depends on selected template (e.g. Times New Roman for Harvard) |
 | Filename | `{cv-name}.pdf` |
 
 > The button is disabled if there are YAML syntax errors.
@@ -516,10 +522,17 @@ editcv/
     ├── App.jsx                     # Root component — global state and layout
     │
     ├── context/
-    │   └── ThemeContext.jsx         # Dark/light mode via React Context + localStorage
+    │   ├── ThemeContext.jsx         # Dark/light mode via React Context + localStorage
+    │   └── TemplateContext.jsx      # Active template (Harvard / Classic / Modern)
+    │
+    ├── templates/
+    │   └── index.js                 # Template definitions: font, padding, date format
     │
     ├── styles/
-    │   └── global.css               # CSS variables, reset, layout, CV page styles
+    │   ├── global.css               # CSS variables, reset, layout, CV page styles
+    │   ├── cv-harvard.css           # Harvard template styles
+    │   ├── cv-classic.css           # Classic template styles
+    │   └── cv-modern.css            # Modern template styles
     │
     ├── utils/
     │   ├── yamlParser.js            # js-yaml wrapper + entry type detection logic
@@ -530,7 +543,7 @@ editcv/
     └── components/
         │
         ├── Navbar/
-        │   └── Navbar.jsx           # Top bar with theme toggle
+        │   └── Navbar.jsx           # Top bar with theme and template toggles
         │
         ├── Sidebar/
         │   └── Sidebar.jsx          # CV list with create / rename / delete
@@ -663,8 +676,8 @@ The form removes friction for non-technical users or when you just want to fill 
 **Why YAML as the internal format?**
 It's more readable than JSON and easier to maintain by hand than XML. An engineer can store their CV in a git repo like any other config file, submit PRs with their updates, and get clean diffs.
 
-**Why Harvard format?**
-It's the most widely recognized standard for academic and technical CVs internationally. No colors, no photos, no columns — just well-organized content. It works across industries and cultures.
+**Why multiple templates?**
+Different contexts call for different styles. Harvard is the standard for academic and research CVs. Classic suits traditional industries. Modern works well for tech and creative roles. All templates share the same data model — switching is instant and affects only the visual output.
 
 **Why localStorage instead of a backend?**
 Zero onboarding friction. No accounts, no API keys, no latency. For a personal CV, localStorage is more than enough. If the user wants a backup, they can copy the YAML and save it as a file.
@@ -679,8 +692,8 @@ To guarantee that what you see on screen is exactly what gets exported. If the p
 
 ## Roadmap
 
+- [x] Multiple templates (Harvard, Classic, Modern)
 - [ ] Drag-to-resize between editor and preview
-- [ ] Multiple templates (beyond Harvard)
 - [ ] Export YAML as a `.yaml` file
 - [ ] Import YAML from a `.yaml` file
 - [ ] `Ctrl+S` shortcut to force manual save
