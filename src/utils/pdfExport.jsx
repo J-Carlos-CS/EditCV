@@ -152,6 +152,19 @@ export async function exportToPDF(cvData, filename = 'cv.pdf', templateId = 'har
       </TemplateStaticProvider>
     )
 
+    // Collect link positions before unmounting (container rect is the page origin)
+    const containerRect = pageContainer.getBoundingClientRect()
+    const linkAnnotations = Array.from(pageContainer.querySelectorAll('a[href]')).map(a => {
+      const r = a.getBoundingClientRect()
+      return {
+        href: a.getAttribute('href'),
+        x: r.left - containerRect.left,
+        y: r.top  - containerRect.top,
+        w: r.width,
+        h: r.height,
+      }
+    })
+
     const canvas = await html2canvas(pageContainer, {
       scale: CANVAS_SCALE,
       useCORS: true,
@@ -163,6 +176,19 @@ export async function exportToPDF(cvData, filename = 'cv.pdf', templateId = 'har
 
     if (pageIndex > 0) pdf.addPage()
     pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, PDF_WIDTH_PT, PDF_HEIGHT_PT)
+
+    // Add clickable link annotations over the image (px → pt conversion)
+    const scaleX = PDF_WIDTH_PT  / PAGE_WIDTH_PX
+    const scaleY = PDF_HEIGHT_PT / PAGE_HEIGHT_PX
+    for (const ann of linkAnnotations) {
+      pdf.link(
+        ann.x * scaleX,
+        ann.y * scaleY,
+        ann.w * scaleX,
+        ann.h * scaleY,
+        { url: ann.href }
+      )
+    }
 
     pageRoot.unmount()
     document.body.removeChild(pageContainer)
