@@ -22,7 +22,7 @@ export function deleteCV(id) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(cvs))
 }
 
-export function createCV(name = 'Nuevo CV') {
+export function createCV(name = 'New CV') {
   return {
     id: Date.now().toString(),
     name,

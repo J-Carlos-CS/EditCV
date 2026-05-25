@@ -57,7 +57,7 @@ function AppInner() {
 
     // If there are no saved CVs yet, create a default one so the editor is never empty
     if (storedCVs.length === 0) {
-      const defaultCV = createCV('Mi CV')
+      const defaultCV = createCV('My CV')
       saveCV(defaultCV)
       storedCVs = [defaultCV]
     }

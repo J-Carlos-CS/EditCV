@@ -3,7 +3,7 @@ import yaml from 'js-yaml'
 export function parseCV(yamlString) {
   try {
     const raw = yaml.load(yamlString)
-    if (!raw || !raw.cv) throw new Error('El YAML debe tener una clave raiz "cv"')
+    if (!raw || !raw.cv) throw new Error('YAML must have a root "cv" key')
     return { data: raw.cv, error: null }
   } catch (e) {
     return { data: null, error: e.message }

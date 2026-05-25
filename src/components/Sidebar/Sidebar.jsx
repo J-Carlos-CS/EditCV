@@ -29,7 +29,7 @@ export default function Sidebar({ cvs, activeCVId, onSelect, onCVsChange }) {
   const [editingName, setEditingName] = useState('')
 
   function handleNewCV() {
-    const newCV = createCV('Nuevo CV')
+    const newCV = createCV('New CV')
     saveCV(newCV)
     onCVsChange()
     onSelect(newCV.id)
@@ -63,7 +63,7 @@ export default function Sidebar({ cvs, activeCVId, onSelect, onCVsChange }) {
   return (
     <aside className="sidebar">
       <button className="newBtn" onClick={handleNewCV}>
-        <IconPlus /> Nuevo CV
+        <IconPlus /> New CV
       </button>
       <ul className="list">
         {cvs.map(cv => (
@@ -88,14 +88,14 @@ export default function Sidebar({ cvs, activeCVId, onSelect, onCVsChange }) {
                 <span className="actions">
                   <button
                     className="iconBtn"
-                    title="Renombrar"
+                    title="Rename"
                     onClick={e => startRenaming(e, cv)}
                   >
                     <IconEdit />
                   </button>
                   <button
                     className="iconBtn"
-                    title="Eliminar"
+                    title="Delete"
                     onClick={e => handleDeleteCV(e, cv.id)}
                     disabled={cvs.length === 1}
                   >
